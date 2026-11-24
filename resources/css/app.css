@@ -1,0 +1,154 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-paper text-ink-900;
+  }
+  html.dark {
+    @apply bg-ink-950 text-ink-100;
+  }
+  body {
+    min-height: 100vh;
+    /* Latar berpetak khas template PMKCM */
+    background-image:
+      linear-gradient(theme('colors.ink.200') 1px, transparent 1px),
+      linear-gradient(90deg, theme('colors.ink.200') 1px, transparent 1px);
+    background-size: 44px 44px;
+    background-attachment: fixed;
+  }
+  html.dark body {
+    background-image:
+      linear-gradient(theme('colors.ink.700') 1px, transparent 1px),
+      linear-gradient(90deg, theme('colors.ink.700') 1px, transparent 1px);
+    opacity: 1;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif uppercase tracking-wider;
+  }
+  ::selection {
+    @apply bg-seal-200 text-ink-900;
+  }
+  .tabular, td.num, .num {
+    @apply font-mono tabular-nums;
+  }
+}
+
+@layer components {
+  /* Strip hazard oranye-hitam di puncak halaman (animasi geser halus) */
+  .hazard {
+    position: relative; overflow: hidden; height: 6px;
+    background: repeating-linear-gradient(-45deg, theme('colors.seal.500') 0 12px, #1b2026 12px 24px);
+  }
+  .hazard::after {
+    content: ''; position: absolute; inset: 0 -40px;
+    background: repeating-linear-gradient(-45deg, theme('colors.seal.500') 0 12px, #1b2026 12px 24px);
+    animation: hazardSlide 2s linear infinite;
+  }
+  @keyframes hazardSlide { to { transform: translateX(34px); } }
+  @keyframes pageUp { from { opacity: 0; transform: translateY(14px); } }
+  .page-in > * { animation: pageUp .45s cubic-bezier(.2,.7,.2,1) both; }
+  .page-in > *:nth-child(2) { animation-delay: .05s; }
+  .page-in > *:nth-child(3) { animation-delay: .1s; }
+  .page-in > *:nth-child(4) { animation-delay: .15s; }
+  @media (prefers-reduced-motion: reduce) {
+    .hazard::after, .page-in > * { animation: none !important; }
+  }
+
+  /* Kartu: garis kiri oranye; kartu berisi tabel memakai garis kiri abu (gaya "flat") */
+  .card {
+    @apply bg-white dark:bg-ink-900 border border-ink-200 dark:border-ink-700 border-l-4 border-l-seal-500;
+  }
+  .card:has(> .overflow-x-auto), .card:has(table.data-table) {
+    @apply border-l-ink-200 dark:border-l-ink-700;
+  }
+  .card-header {
+    @apply px-5 py-4 border-b border-ink-100 dark:border-ink-800 flex items-center justify-between gap-3;
+  }
+  .card-body {
+    @apply p-5;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm font-serif font-semibold uppercase tracking-widest
+      transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-seal-500
+      disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.07); }
+  .btn-primary, .btn-accent {
+    @apply btn bg-seal-500 text-white dark:text-ink-950;
+  }
+  .btn-secondary {
+    @apply btn bg-transparent text-ink-800 border border-ink-300 hover:bg-ink-50
+      dark:text-ink-100 dark:border-ink-700 dark:hover:bg-ink-800;
+  }
+  .btn-danger {
+    @apply btn bg-transparent text-red-700 border border-red-700 hover:bg-red-50
+      dark:text-red-400 dark:border-red-400 dark:hover:bg-red-950;
+  }
+  .btn-ghost {
+    @apply btn bg-transparent text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-ink-800;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs tracking-wider;
+  }
+
+  .input {
+    @apply block w-full border-ink-200 bg-ink-50 text-ink-900 text-sm
+      focus:border-seal-500 focus:ring-seal-500
+      dark:bg-ink-800 dark:border-ink-700 dark:text-ink-100;
+  }
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400 mb-1.5;
+  }
+  .error-text {
+    @apply text-xs text-red-600 dark:text-red-400 mt-1;
+  }
+
+  /* Badge persegi berbingkai, seperti .tag di template */
+  .badge {
+    @apply inline-flex items-center border px-2 py-0.5 text-xs font-semibold bg-transparent;
+  }
+  .badge-green { @apply badge text-emerald-700 border-emerald-700 dark:text-emerald-400 dark:border-emerald-400; }
+  .badge-amber { @apply badge text-seal-600 border-seal-500 dark:text-seal-400 dark:border-seal-400; }
+  .badge-red { @apply badge text-red-700 border-red-700 dark:text-red-400 dark:border-red-400; }
+  .badge-slate { @apply badge text-ink-600 border-ink-300 dark:text-ink-300 dark:border-ink-600; }
+  .badge-seal { @apply badge text-seal-600 border-seal-500 dark:text-seal-400 dark:border-seal-400; }
+
+  table.data-table {
+    @apply w-full text-sm border-collapse;
+  }
+  table.data-table th {
+    @apply text-left text-xs font-serif font-semibold uppercase tracking-wider text-ink-500 dark:text-ink-400
+      px-4 py-3 border-b-2 border-ink-200 dark:border-ink-700;
+  }
+  table.data-table td {
+    @apply px-4 py-3 border-b border-ink-200 dark:border-ink-700 align-top;
+  }
+  table.data-table tbody tr:hover {
+    @apply bg-ink-50 dark:bg-ink-800/60;
+  }
+
+  /* Lembar cetak (Form Penilaian) */
+  .sheet {
+    @apply bg-white text-ink-900 border border-ink-200 p-7 max-w-3xl mx-auto;
+  }
+  .sheet table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  .sheet th, .sheet td { border: 1px solid #999; padding: 8px 10px; text-align: left; color: #111; text-transform: none; letter-spacing: 0; }
+  .sheet th { background: #eee; font-weight: 600; }
+}
+
+/* Optimasi layar sentuh: target tekan >= 44px dan font input 16px (mencegah zoom otomatis di iOS). */
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px !important; }
+  .btn { min-height: 44px; }
+  .btn-sm { min-height: 38px; }
+}
+
+@media print {
+  .noprint, header, .hazard { display: none !important; }
+  html, body { background: #fff !important; background-image: none !important; }
+  main { padding: 0 !important; }
+  .sheet { border: 0; padding: 0; }
+}

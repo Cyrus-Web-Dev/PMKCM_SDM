@@ -1,0 +1,62 @@
+{
+  "name": "SDM PMKCM V Indarung 5",
+  "short_name": "SDM PMKCM V",
+  "description": "Manajemen SDM: absensi, laporan harian, dan penilaian outsourcing.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14181d",
+  "theme_color": "#e0590f",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "id": "/",
+  "shortcuts": [
+    {
+      "name": "Absen",
+      "short_name": "Absen",
+      "url": "/my/attendances",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Laporan Harian",
+      "short_name": "Laporan",
+      "url": "/daily-reports",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Notifikasi",
+      "short_name": "Notif",
+      "url": "/notifications",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
