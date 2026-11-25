@@ -19,9 +19,9 @@ class DailyReport extends Model
     public const HOURS_SQL = 'case when end_time > start_time then extract(epoch from (end_time - start_time)) else extract(epoch from (end_time - start_time)) + 86400 end / 3600.0';
 
     protected $fillable = [
-        'employee_id', 'report_date', 'team', 'shift_id', 'shift_name', 'area',
+        'employee_id', 'report_date', 'team', 'area',
         'start_time', 'end_time', 'task', 'issue', 'status',
-        'review_status', 'review_note', 'reviewed_by', 'reviewed_at',
+        'review_status', 'review_note', 'reviewed_by', 'reviewed_at', 'work_order_id',
     ];
 
     protected function casts(): array
@@ -44,15 +44,16 @@ class DailyReport extends Model
         return $this->hasMany(DailyReportComment::class);
     }
 
+    public function workOrder(): BelongsTo
+    {
+        return $this->belongsTo(WorkOrder::class);
+    }
+
     public function reviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
-    public function shift(): BelongsTo
-    {
-        return $this->belongsTo(Shift::class);
-    }
 
     /** Durasi kerja dalam jam (1 desimal). */
     public function getHoursAttribute(): float
@@ -74,7 +75,6 @@ class DailyReport extends Model
             'id' => $this->id,
             'date' => $this->report_date->toDateString(),
             'team' => $this->team,
-            'shift' => $this->shift_name,
             'area' => $this->area,
             'start' => substr($this->start_time, 0, 5),
             'end' => substr($this->end_time, 0, 5),
@@ -85,6 +85,7 @@ class DailyReport extends Model
             'status_label' => self::STATUSES[$this->status] ?? $this->status,
             'review_status' => $this->review_status,
             'review_label' => self::REVIEW_STATUSES[$this->review_status] ?? $this->review_status,
+            'work_order' => $this->relationLoaded('workOrder') ? $this->workOrder?->number : null,
             'photos_count' => $this->photos_count ?? null,
             'comments_count' => $this->comments_count ?? null,
         ];

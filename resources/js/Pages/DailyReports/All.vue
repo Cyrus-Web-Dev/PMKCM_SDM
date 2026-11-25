@@ -69,20 +69,19 @@ const reload = () => router.reload({ only: ['reports', 'summary'] })
     <div class="card">
       <div class="overflow-x-auto">
         <table class="data-table">
-          <thead><tr><th>Tanggal</th><th>Karyawan</th><th>Tim</th><th>Shift</th><th>Area</th><th>Waktu</th><th>Uraian</th><th>Status</th><th></th></tr></thead>
+          <thead><tr><th>Tanggal</th><th>Karyawan</th><th>Tim</th><th>Area</th><th>Waktu</th><th>Uraian</th><th>Status</th><th></th></tr></thead>
           <tbody>
             <tr v-for="r in reports.data" :key="r.id">
               <td class="num whitespace-nowrap">{{ fmtDate(r.date) }}</td>
               <td>{{ r.employee || '—' }}<p class="font-mono text-xs text-ink-400">{{ r.nip }}</p></td>
               <td>{{ r.team || '—' }}</td>
-              <td>{{ r.shift || '—' }}</td>
               <td>{{ r.area }}</td>
               <td class="num whitespace-nowrap">{{ r.start }}–{{ r.end }}<p class="text-xs text-ink-400">{{ r.hours }} jam</p></td>
               <td class="max-w-xs">{{ r.task }}<p v-if="r.issue" class="mt-1 text-xs text-red-600 dark:text-red-400">Kendala: {{ r.issue }}</p></td>
               <td><span :class="STATUS_BADGE[r.status]">{{ r.status_label }}</span><br /><span :class="REVIEW_BADGE[r.review_status]" class="mt-1">{{ r.review_label }}</span></td>
               <td class="text-right"><button class="btn-ghost btn-sm" @click="detailId = r.id">Detail<template v-if="r.photos_count || r.comments_count"> ({{ r.photos_count }}f/{{ r.comments_count }}k)</template></button></td>
             </tr>
-            <tr v-if="!reports.data.length"><td colspan="9" class="py-10 text-center text-sm text-ink-400">Tidak ada laporan pada periode ini.</td></tr>
+            <tr v-if="!reports.data.length"><td colspan="8" class="py-10 text-center text-sm text-ink-400">Tidak ada laporan pada periode ini.</td></tr>
           </tbody>
         </table>
       </div>

@@ -13,9 +13,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolePermissionSeeder::class,
-            LeaveTypeSeeder::class,
             DepartmentSeeder::class,
-            ShiftSeeder::class,
         ]);
 
         // Opsional: buat akun admin awal dari .env (SDM_ADMIN_EMAIL + SDM_ADMIN_PASSWORD).

@@ -16,7 +16,8 @@ class RecapController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:reports.view');
+        $this->middleware('permission:reports.view')->only(['index']);
+        $this->middleware('permission:reports.export')->only(['export']);
     }
 
     public function index(Request $request)

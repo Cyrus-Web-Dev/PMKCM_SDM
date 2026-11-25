@@ -62,7 +62,7 @@ onMounted(load)
         <div>
           <p class="font-semibold">{{ data.report.employee }} <span class="font-mono text-xs text-ink-400">{{ data.report.nip }}</span></p>
           <p class="text-sm text-ink-500">
-            {{ fmtDate(data.report.date) }} · {{ data.report.shift || '—' }} · Tim {{ data.report.team || '—' }} · {{ data.report.area }} ·
+            {{ fmtDate(data.report.date) }} · Tim {{ data.report.team || '—' }} · {{ data.report.area }} ·
             <span class="font-mono">{{ data.report.start }}–{{ data.report.end }}</span> ({{ data.report.hours }} jam)
           </p>
           <div class="mt-2 flex gap-2">

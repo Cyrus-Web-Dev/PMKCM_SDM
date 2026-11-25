@@ -4,7 +4,6 @@ namespace App\Http\Middleware;
 
 use App\Models\AppNotification;
 use App\Models\PasswordResetRequest;
-use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -50,7 +49,7 @@ class HandleInertiaRequests extends Middleware
             'pending_resets' => fn () => $user && $user->can('users.manage') ? PasswordResetRequest::where('status', 'pending')->count() : 0,
             'notifications_unread' => fn () => $user ? AppNotification::where('user_id', $user->id)->whereNull('read_at')->count() : 0,
             // Batas diam (menit) sebelum auto-logout di browser; 0 = nonaktif.
-            'idle_timeout' => fn () => $user ? Setting::idleTimeout() : 0,
+            'idle_timeout' => fn () => $user ? (int) config('hr.idle_timeout_minutes') : 0,
             // Daftar tim kerja (Gudang, Cooler, Kiln, Coal Mill) untuk dropdown di berbagai halaman.
             'teams' => config('hr.teams'),
             'flash' => [

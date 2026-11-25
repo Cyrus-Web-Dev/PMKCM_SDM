@@ -6,6 +6,7 @@ export const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', '
 export const fmtDate = (d) => (d ? d.split('-').reverse().join('/') : '-')
 
 export const STATUS_BADGE = { selesai: 'badge-green', proses: 'badge-amber', kendala: 'badge-red' }
+export const WO_BADGE = { direncanakan: 'badge-slate', berjalan: 'badge-amber', selesai: 'badge-green', dibatalkan: 'badge-red' }
 export const REVIEW_BADGE = { menunggu: 'badge-slate', disetujui: 'badge-green', perlu_revisi: 'badge-amber' }
 
 /** Predikat dari nilai 0-100 (aturan sama dengan Assessment::grade di server). */

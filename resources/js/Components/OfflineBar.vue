@@ -19,7 +19,7 @@ const fmt = (iso) => new Date(iso).toLocaleString('id-ID', { day: '2-digit', mon
 <template>
   <div v-if="!offlineState.online || offlineState.items.length || offlineState.message" class="noprint space-y-2">
     <div v-if="!offlineState.online" class="border-l-4 border-amber-500 bg-white px-4 py-3 text-sm dark:bg-ink-800">
-      <b>Kamu sedang offline.</b> Absen dan laporan harian tetap bisa diisi; datanya disimpan di perangkat dan dikirim otomatis saat sinyal kembali.
+      <b>Kamu sedang offline.</b> Laporan harian tetap bisa diisi; datanya disimpan di perangkat dan dikirim otomatis saat sinyal kembali.
     </div>
 
     <div v-if="offlineState.message" class="border-l-4 border-emerald-600 bg-white px-4 py-3 text-sm text-emerald-800 dark:bg-ink-800 dark:text-emerald-300">{{ offlineState.message }}</div>

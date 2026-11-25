@@ -1,4 +1,4 @@
-// Antrean offline: absen & laporan harian yang dikirim saat sinyal buruk disimpan di IndexedDB perangkat,
+// Antrean offline: laporan harian yang dikirim saat sinyal buruk disimpan di IndexedDB perangkat,
 // lalu dikirim otomatis begitu online. Tiap data punya ID unik (header X-Offline-Id) sehingga pengiriman ulang
 // tidak pernah menghasilkan data ganda (server menolak ID yang sudah diproses).
 import axios from 'axios'

@@ -32,7 +32,7 @@ class SetupController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        // Pastikan role, izin, shift, jenis cuti, dan departemen awal tersedia (idempoten).
+        // Pastikan role, izin, dan departemen awal tersedia (idempoten).
         Artisan::call('db:seed', ['--force' => true]);
 
         $user = DB::transaction(function () use ($data) {

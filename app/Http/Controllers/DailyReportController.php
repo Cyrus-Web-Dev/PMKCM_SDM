@@ -6,8 +6,8 @@ use App\Http\Controllers\Concerns\RespondsToSync;
 use App\Models\DailyReport;
 use App\Models\DailyReportPhoto;
 use App\Models\Employee;
-use App\Models\Shift;
 use App\Models\User;
+use App\Models\WorkOrder;
 use App\Services\ActivityLogger;
 use App\Services\Notify;
 use App\Support\Exporter;
@@ -46,7 +46,7 @@ class DailyReportController extends Controller
         $first = Carbon::parse($month.'-01');
 
         $reports = DailyReport::where('employee_id', $employee->id)
-            ->withCount(['photos', 'comments'])
+            ->withCount(['photos', 'comments'])->with('workOrder:id,number')
             ->whereBetween('report_date', [$first->toDateString(), $first->copy()->endOfMonth()->toDateString()])
             ->orderByDesc('report_date')->orderByDesc('id')->get()
             ->map(fn (DailyReport $r) => $r->toRow() + [
@@ -58,11 +58,14 @@ class DailyReportController extends Controller
         return Inertia::render('DailyReports/Index', [
             'reports' => $reports,
             'month' => $month,
-            'shifts' => $this->shifts(),
             'defaultTeam' => $employee->team,
             'today' => today()->toDateString(),
             'employeeName' => $employee->full_name,
             'maxPhotos' => self::MAX_PHOTOS,
+            // Perintah kerja aktif milikku (opsional ditautkan ke laporan).
+            'workOrders' => WorkOrder::involving($employee->id)->whereIn('status', ['direncanakan', 'berjalan'])
+                ->orderByDesc('order_date')->limit(30)->get(['id', 'number', 'description'])
+                ->map(fn (WorkOrder $o) => ['id' => $o->id, 'label' => $o->number.' - '.mb_strimwidth($o->description, 0, 50, '…')])->values(),
         ]);
     }
 
@@ -73,15 +76,13 @@ class DailyReportController extends Controller
 
         $data = $request->validate($this->rules($request) + [
             'report_date' => ['required', 'date', 'before_or_equal:today'],
-            'shift_id' => ['nullable', 'exists:shifts,id'],
         ], $this->messages());
 
-        $shift = ! empty($data['shift_id']) ? Shift::find($data['shift_id']) : null;
+        $this->assertInvolved($employee->id, $data['work_order_id'] ?? null);
         $files = $request->file('photos', []);
 
         $report = DailyReport::create(Arr::except($data, ['photos']) + [
             'employee_id' => $employee->id,
-            'shift_name' => $shift?->name ?? 'Manual',
         ]);
         $this->savePhotos($report, $files);
 
@@ -106,6 +107,7 @@ class DailyReportController extends Controller
             throw ValidationException::withMessages(['photos' => 'Maksimal '.self::MAX_PHOTOS.' foto per laporan.']);
         }
 
+        $this->assertInvolved($request->user()->employee->id, $data['work_order_id'] ?? null);
         $wasRevision = $dailyReport->review_status === 'perlu_revisi';
         $dailyReport->update(Arr::except($data, ['photos']) + ['review_status' => 'menunggu']);
         $this->savePhotos($dailyReport, $newFiles);
@@ -276,7 +278,7 @@ class DailyReportController extends Controller
         $rows = $query->orderBy('report_date')->orderBy('id')->limit(5000)->get()
             ->map(fn (DailyReport $r) => [
                 $r->report_date->format('d/m/Y'), $r->employee?->nip, $r->employee?->full_name, $r->team,
-                $r->shift_name, $r->area, substr($r->start_time, 0, 5), substr($r->end_time, 0, 5),
+                $r->area, substr($r->start_time, 0, 5), substr($r->end_time, 0, 5),
                 $r->hours, $r->task, $r->issue, DailyReport::STATUSES[$r->status] ?? $r->status,
                 DailyReport::REVIEW_STATUSES[$r->review_status] ?? $r->review_status,
             ])->all();
@@ -286,7 +288,7 @@ class DailyReportController extends Controller
             'laporan-harian-'.$p['from'].'-sd-'.$p['to'],
             'Laporan Harian',
             "{$p['type_label']}: {$p['label']}",
-            ['Tanggal', 'NIP', 'Nama', 'Tim', 'Shift', 'Area', 'Mulai', 'Selesai', 'Jam', 'Uraian Pekerjaan', 'Kendala', 'Status', 'Review'],
+            ['Tanggal', 'NIP', 'Nama', 'Tim', 'Area', 'Mulai', 'Selesai', 'Jam', 'Uraian Pekerjaan', 'Kendala', 'Status', 'Review'],
             $rows
         );
     }
@@ -344,6 +346,7 @@ class DailyReportController extends Controller
             'end_time' => ['required', 'date_format:H:i'],
             'task' => ['required', 'string', 'max:2000'],
             'issue' => ['nullable', 'string', 'max:500'],
+            'work_order_id' => ['nullable', 'integer', 'exists:work_orders,id'],
             'status' => ['required', Rule::in(array_keys(DailyReport::STATUSES))],
             // Foto bukti: 1-3 foto dari kamera; WAJIB bila status Selesai (kecuali laporan sudah punya foto).
             'photos' => [Rule::requiredIf(fn () => $request->input('status') === 'selesai' && $existingPhotos === 0), 'nullable', 'array', 'max:'.self::MAX_PHOTOS],
@@ -357,6 +360,14 @@ class DailyReportController extends Controller
             'photos.required' => 'Foto bukti kerja wajib (minimal 1) untuk laporan berstatus Selesai.',
             'photos.max' => 'Maksimal '.self::MAX_PHOTOS.' foto per laporan.',
         ];
+    }
+
+    /** Laporan hanya boleh ditautkan ke perintah kerja yang melibatkan pelapor. */
+    private function assertInvolved(int $employeeId, $workOrderId): void
+    {
+        if ($workOrderId && ! WorkOrder::find($workOrderId)?->involves($employeeId)) {
+            throw ValidationException::withMessages(['work_order_id' => 'Kamu bukan bagian dari perintah kerja ini.']);
+        }
     }
 
     private function savePhotos(DailyReport $report, array $files): void
@@ -399,13 +410,4 @@ class DailyReportController extends Controller
         TeamScope::assertCanAct($user, $report->employee);
     }
 
-    private function shifts()
-    {
-        return Shift::orderBy('id')->get()->map(fn (Shift $s) => [
-            'id' => $s->id,
-            'name' => $s->name,
-            'start' => substr($s->start_time, 0, 5),
-            'end' => substr($s->end_time, 0, 5),
-        ]);
-    }
 }

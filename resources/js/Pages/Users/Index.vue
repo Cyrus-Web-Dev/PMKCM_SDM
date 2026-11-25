@@ -152,7 +152,7 @@ function saveRoles() {
               <option value="">— Belum dihubungkan —</option>
               <option v-for="e in employeeOptions" :key="e.id" :value="e.id">{{ e.full_name }} ({{ e.nip }})</option>
             </select>
-            <p class="mt-1 text-xs text-ink-400">Tanpa hubungan ini, pengguna tidak bisa memakai laporan harian, absen, dan cuti.</p>
+            <p class="mt-1 text-xs text-ink-400">Tanpa hubungan ini, pengguna tidak bisa memakai laporan harian dan perintah kerja.</p>
           </div>
           <div v-if="dialog.mode === 'approve'">
             <label class="label">Role</label>

@@ -1,14 +1,14 @@
 <?php
 
-use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\LeaveController;
 use App\Http\Controllers\AssessmentController;
+use App\Http\Controllers\HistoryCardController;
+use App\Http\Controllers\WorkOrderController;
+use App\Http\Controllers\WorkOrderRatingController;
 use App\Http\Controllers\DailyReportController;
 use App\Http\Controllers\RecapController;
-use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -19,7 +19,6 @@ use Inertia\Inertia;
 |--------------------------------------------------------------------------
 */
 Route::redirect('/', '/login')->name('welcome');
-
 
 require __DIR__.'/auth.php';
 
@@ -63,23 +62,6 @@ Route::middleware(['auth', 'has.role'])->group(function () {
     Route::post('/users/reset-requests/{resetRequest}/dismiss', [UserManagementController::class, 'dismissResetRequest'])->name('users.reset-requests.dismiss');
     Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
 
-    // --- Absensi ---
-    Route::get('/attendances', [AttendanceController::class, 'index'])->name('attendances.index');
-    Route::put('/attendances/{attendance}', [AttendanceController::class, 'update'])->name('attendances.update');
-    Route::post('/attendances/check-in', [AttendanceController::class, 'checkIn'])->middleware('offline.dedupe')->name('attendances.check-in');
-    Route::post('/attendances/check-out', [AttendanceController::class, 'checkOut'])->middleware('offline.dedupe')->name('attendances.check-out');
-    Route::get('/attendances/{attendance}/photo/{type}', [AttendanceController::class, 'photo'])->name('attendances.photo');
-    Route::get('/my/attendances', [AttendanceController::class, 'myHistory'])->name('attendances.my-history');
-
-    // --- Cuti & Izin ---
-    Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves.index');
-    Route::post('/leaves', [LeaveController::class, 'store'])->name('leaves.store');
-    Route::post('/leaves/{leave}/approve', [LeaveController::class, 'approve'])->name('leaves.approve');
-    Route::post('/leaves/{leave}/reject', [LeaveController::class, 'reject'])->name('leaves.reject');
-    Route::post('/leaves/{leave}/cancel', [LeaveController::class, 'cancel'])->name('leaves.cancel');
-    Route::get('/my/leaves', [LeaveController::class, 'myLeaves'])->name('leaves.mine');
-
-
     // --- Laporan Harian (tiap karyawan mengisi sendiri; "Semua Laporan" untuk pemegang izin daily_reports.view) ---
     Route::get('/daily-reports', [DailyReportController::class, 'index'])->name('daily-reports.index');
     Route::post('/daily-reports', [DailyReportController::class, 'store'])->middleware('offline.dedupe')->name('daily-reports.store');
@@ -105,35 +87,40 @@ Route::middleware(['auth', 'has.role'])->group(function () {
     Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
     Route::get('/my/assessments', [AssessmentController::class, 'mine'])->name('assessments.mine');
 
-    // --- Shift kerja ---
-    Route::get('/shifts', [ShiftController::class, 'index'])->name('shifts.index');
-    Route::post('/shifts', [ShiftController::class, 'store'])->name('shifts.store');
-    Route::put('/shifts/{shift}', [ShiftController::class, 'update'])->name('shifts.update');
-    Route::delete('/shifts/{shift}', [ShiftController::class, 'destroy'])->name('shifts.destroy');
+    // --- Perintah Kerja Harian, Penilaian Anggota, History Card ---
+    Route::get('/work-orders', [WorkOrderController::class, 'index'])->name('work-orders.index');
+    Route::get('/work-orders/create', [WorkOrderController::class, 'create'])->name('work-orders.create');
+    Route::post('/work-orders', [WorkOrderController::class, 'store'])->name('work-orders.store');
+    Route::get('/work-orders/ratings', [WorkOrderRatingController::class, 'index'])->name('work-orders.ratings');
+    Route::get('/work-orders/ratings/export', [WorkOrderRatingController::class, 'export'])->name('work-orders.ratings.export');
+    Route::get('/work-orders/{workOrder}', [WorkOrderController::class, 'show'])->name('work-orders.show');
+    Route::get('/work-orders/{workOrder}/edit', [WorkOrderController::class, 'edit'])->name('work-orders.edit');
+    Route::put('/work-orders/{workOrder}', [WorkOrderController::class, 'update'])->name('work-orders.update');
+    Route::delete('/work-orders/{workOrder}', [WorkOrderController::class, 'destroy'])->name('work-orders.destroy');
+    Route::post('/work-orders/{workOrder}/status', [WorkOrderController::class, 'status'])->name('work-orders.status');
+    Route::post('/work-orders/{workOrder}/ratings', [WorkOrderController::class, 'rate'])->name('work-orders.rate');
+    Route::get('/history-cards', [HistoryCardController::class, 'index'])->name('history-cards.index');
+    Route::get('/history-cards/export', [HistoryCardController::class, 'export'])->name('history-cards.export');
+    Route::get('/history-cards/{workOrder}', [HistoryCardController::class, 'show'])->name('history-cards.show');
+    Route::get('/history-cards/{workOrder}/pdf', [HistoryCardController::class, 'pdf'])->name('history-cards.pdf');
 
-
-
-    // --- Hari Libur (nasional dari API + libur/hari kerja pengganti perusahaan) ---
-    Route::get('/holidays', [\App\Http\Controllers\HolidayController::class, 'index'])->name('holidays.index');
-    Route::post('/holidays', [\App\Http\Controllers\HolidayController::class, 'store'])->name('holidays.store');
-    Route::post('/holidays/refresh', [\App\Http\Controllers\HolidayController::class, 'refresh'])->name('holidays.refresh');
-    Route::delete('/holidays/{holiday}', [\App\Http\Controllers\HolidayController::class, 'destroy'])->name('holidays.destroy');
-
-
-
+    // --- Role & hak akses (khusus Owner) ---
+    Route::get('/roles', [\App\Http\Controllers\RoleController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [\App\Http\Controllers\RoleController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [\App\Http\Controllers\RoleController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{role}/edit', [\App\Http\Controllers\RoleController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{role}', [\App\Http\Controllers\RoleController::class, 'update'])->name('roles.update');
+    Route::delete('/roles/{role}', [\App\Http\Controllers\RoleController::class, 'destroy'])->name('roles.destroy');
 
     // --- Notifikasi dalam aplikasi ---
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll'])->name('notifications.read-all');
     Route::get('/notifications/{notification}/open', [\App\Http\Controllers\NotificationController::class, 'open'])->name('notifications.open');
 
-    // --- Pengaturan (toleransi terlambat, auto-logout) ---
-    Route::get('/settings', [\App\Http\Controllers\SettingsController::class, 'index'])->name('settings.index');
-    Route::put('/settings', [\App\Http\Controllers\SettingsController::class, 'update'])->name('settings.update');
-
     // --- Backup Database (super-admin/hr-admin saja, lihat RolePermissionSeeder) ---
     Route::get('/settings/backup', [\App\Http\Controllers\BackupController::class, 'index'])->name('backup.index');
     Route::post('/settings/backup', [\App\Http\Controllers\BackupController::class, 'store'])->name('backup.store');
+    Route::get('/settings/backup/pdf/{type}', [\App\Http\Controllers\BackupController::class, 'pdf'])->name('backup.pdf');
     Route::get('/settings/backup/{filename}/download', [\App\Http\Controllers\BackupController::class, 'download'])->name('backup.download');
     Route::delete('/settings/backup/{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('backup.destroy');
 

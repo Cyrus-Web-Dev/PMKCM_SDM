@@ -12,22 +12,21 @@ class SdmUser extends Command
     protected $signature = 'sdm:user {email : Email user}
                             {--name= : Nama (wajib bila user baru)}
                             {--password= : Password (wajib bila user baru; minimal 8 karakter)}
-                            {--role=karyawan : super-admin | hr-admin | manajer | karyawan}';
+                            {--role=karyawan : nama role (super-admin, karyawan, atau role buatan Owner)}';
 
     protected $description = 'Buat user baru atau ubah role user yang sudah ada (tanpa perlu tinker)';
 
     public function handle(): int
     {
         $role = (string) $this->option('role');
-        $validRoles = ['super-admin', 'hr-admin', 'manajer', 'karyawan'];
+        // Pastikan role & permission bawaan ada, lalu cocokkan dengan role yang tersedia (termasuk buatan Owner).
+        (new RolePermissionSeeder())->run();
+        $validRoles = \Spatie\Permission\Models\Role::orderBy('name')->pluck('name')->all();
         if (! in_array($role, $validRoles, true)) {
             $this->error('Role harus salah satu dari: '.implode(', ', $validRoles));
 
             return self::FAILURE;
         }
-
-        // Pastikan role & permission ada (aman dijalankan berulang).
-        (new RolePermissionSeeder())->run();
 
         $email = (string) $this->argument('email');
         $user = User::where('email', $email)->first();

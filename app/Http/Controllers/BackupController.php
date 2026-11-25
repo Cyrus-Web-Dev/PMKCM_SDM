@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Services\ActivityLogger;
+use App\Services\DataBackupService;
 use App\Services\DatabaseBackupService;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -19,13 +22,14 @@ class BackupController extends Controller
         $this->middleware('permission:settings.manage');
     }
 
-    public function index(DatabaseBackupService $backup)
+    public function index(DatabaseBackupService $backup, DataBackupService $data)
     {
         return Inertia::render('Settings/Backup', [
             'files' => $backup->list(),
             'keep' => (int) config('hr.backup.keep', 10),
             'driver' => DB::connection()->getDriverName(),
             'nativeTool' => $backup->nativeToolPath(),
+            'pdfCounts' => $data->counts(),
         ]);
     }
 
@@ -43,6 +47,21 @@ class BackupController extends Controller
         ActivityLogger::log('backup.created', "Membuat backup database: {$result['file']}", null, auth()->id());
 
         return back()->with('success', "Backup dibuat: {$result['file']}".($result['note'] ? " — {$result['note']}" : ''));
+    }
+
+    /** Backup DATA sebagai PDF: owner | roles | employees | all (gabungan dalam 1 file). */
+    public function pdf(Request $request, DataBackupService $data, string $type)
+    {
+        abort_unless(array_key_exists($type, DataBackupService::TYPES), 404);
+
+        set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
+        $document = $data->build($type, $request->user());
+        ActivityLogger::log('backup.pdf', 'Mengunduh backup data (PDF): '.DataBackupService::TYPES[$type], null, $request->user()->id);
+
+        return Pdf::loadView('pdf.data_backup', $document)->setPaper('a4', 'landscape')
+            ->download('backup-data-'.$type.'-'.now()->format('Ymd-His').'.pdf');
     }
 
     public function download(string $filename)

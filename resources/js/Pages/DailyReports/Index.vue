@@ -7,19 +7,19 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3'
 import { fmtDate, STATUS_BADGE, REVIEW_BADGE } from '@/utils'
 import { postOrQueue } from '@/offline'
 
-const props = defineProps({ reports: Array, month: String, shifts: Array, defaultTeam: String, today: String, employeeName: String, maxPhotos: Number })
+const props = defineProps({ reports: Array, month: String, defaultTeam: String, today: String, employeeName: String, maxPhotos: Number, workOrders: { type: Array, default: () => [] } })
 const page = usePage()
 const teams = computed(() => page.props.teams ?? [])
 
 const form = useForm({
   report_date: props.today,
   team: props.defaultTeam ?? '',
-  shift_id: '',
   area: '',
   start_time: '07:00',
   end_time: '15:00',
   task: '',
   issue: '',
+  work_order_id: '',
   status: 'selesai',
 })
 
@@ -52,20 +52,11 @@ onBeforeUnmount(clearPhotos)
 
 form.transform((data) => ({ ...data, photos: photos.value.map((p) => p.file) }))
 
-// Memilih shift mengisi jam mulai/selesai otomatis; "Manual" membiarkan jam diisi sendiri.
-function pickShift() {
-  const s = props.shifts.find((x) => String(x.id) === String(form.shift_id))
-  if (s) {
-    form.start_time = s.start
-    form.end_time = s.end
-  }
-}
-
 function startEdit(r) {
   editing.value = r
   clearPhotos()
   form.clearErrors()
-  Object.assign(form, { report_date: r.date, team: r.team ?? '', shift_id: '', area: r.area, start_time: r.start, end_time: r.end, task: r.task, issue: r.issue ?? '', status: r.status })
+  Object.assign(form, { report_date: r.date, team: r.team ?? '', area: r.area, start_time: r.start, end_time: r.end, task: r.task, issue: r.issue ?? '', status: r.status })
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 function cancelEdit() {
@@ -99,8 +90,8 @@ async function submit() {
       url: route('daily-reports.store'),
       label: `Laporan ${fmtDate(form.report_date)} - ${form.area}`,
       fields: {
-        report_date: form.report_date, team: form.team, shift_id: form.shift_id, area: form.area,
-        start_time: form.start_time, end_time: form.end_time, task: form.task, issue: form.issue, status: form.status,
+        report_date: form.report_date, team: form.team, area: form.area,
+        start_time: form.start_time, end_time: form.end_time, task: form.task, issue: form.issue, status: form.status, work_order_id: form.work_order_id,
       },
       files: photos.value.map((p) => ({ field: 'photos[]', blob: p.file, name: 'foto.jpg' })),
     })
@@ -152,12 +143,13 @@ const totalHours = computed(() => props.reports.reduce((a, r) => a + r.hours, 0)
             </select>
           </div>
         </div>
-        <div v-if="!editing">
-          <label class="label">Shift</label>
-          <select v-model="form.shift_id" @change="pickShift" class="input">
-            <option value="">Manual (isi jam sendiri)</option>
-            <option v-for="s in shifts" :key="s.id" :value="s.id">{{ s.name }} ({{ s.start }} – {{ s.end }})</option>
+        <div v-if="!editing && workOrders.length">
+          <label class="label">Perintah Kerja (opsional)</label>
+          <select v-model="form.work_order_id" class="input">
+            <option value="">Tidak terkait perintah kerja</option>
+            <option v-for="w in workOrders" :key="w.id" :value="w.id">{{ w.label }}</option>
           </select>
+          <p v-if="form.errors.work_order_id" class="error-text">{{ form.errors.work_order_id }}</p>
         </div>
         <div>
           <label class="label">Area / Lokasi Kerja</label>
@@ -223,12 +215,12 @@ const totalHours = computed(() => props.reports.reduce((a, r) => a + r.hours, 0)
         </div>
         <div class="overflow-x-auto">
           <table class="data-table">
-            <thead><tr><th>Tanggal</th><th>Shift / Tim</th><th>Area</th><th>Waktu</th><th>Uraian</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Tanggal</th><th>Tim</th><th>Area</th><th>Waktu</th><th>Uraian</th><th>Status</th><th></th></tr></thead>
             <tbody>
               <tr v-for="r in reports" :key="r.id">
                 <td class="num whitespace-nowrap">{{ fmtDate(r.date) }}</td>
-                <td>{{ r.shift || '—' }}<p class="text-xs text-ink-400">{{ r.team || '—' }}</p></td>
-                <td>{{ r.area }}</td>
+                <td>{{ r.team || '—' }}</td>
+                <td>{{ r.area }}<p v-if="r.work_order" class="font-mono text-xs text-seal-600 dark:text-seal-400">{{ r.work_order }}</p></td>
                 <td class="num whitespace-nowrap">{{ r.start }}–{{ r.end }}<p class="text-xs text-ink-400">{{ r.hours }} jam</p></td>
                 <td class="max-w-xs">{{ r.task }}<p v-if="r.issue" class="mt-1 text-xs text-red-600 dark:text-red-400">Kendala: {{ r.issue }}</p><p class="mt-1 text-xs text-ink-400">{{ r.photos_count }} foto · {{ r.comments_count }} komentar</p></td>
                 <td><span :class="STATUS_BADGE[r.status]">{{ r.status_label }}</span><br /><span :class="REVIEW_BADGE[r.review_status]" class="mt-1">{{ r.review_label }}</span></td>

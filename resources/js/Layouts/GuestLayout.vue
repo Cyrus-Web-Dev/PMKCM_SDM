@@ -18,7 +18,7 @@ import Logo from '@/Components/Logo.vue'
           Manajemen<br /><span class="text-seal-400">SDM</span>
         </h1>
         <p class="max-w-md text-ink-400">
-          Data karyawan, absensi, cuti, laporan harian, dan penilaian outsourcing dalam satu platform terpadu untuk operasional pabrik.
+          Data karyawan, perintah kerja, laporan harian, dan penilaian outsourcing dalam satu platform terpadu untuk operasional pabrik.
         </p>
       </div>
       <div class="relative mt-8 text-xs uppercase tracking-[.2em] text-ink-400">Akses terbatas · Akun dibuat oleh Admin SDM</div>

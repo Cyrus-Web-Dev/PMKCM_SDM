@@ -13,9 +13,8 @@ ChartJS.register(ArcElement, BarElement, LineElement, PointElement, CategoryScal
 
 const props = defineProps({
   period: Object, periodLabels: Object, filters: Object, roles: Array,
-  cards: Object, doughnut: Array, attendanceTrend: Object, radar: Object, teamScores: Array,
+  cards: Object, doughnut: Array, workOrderTrend: Object, radar: Object, teamScores: Array,
   scoreTrend: Object, reportsChart: Object, topIssues: Array, ranking: Array, alerts: Object,
-  upcoming_holidays: { type: Array, default: () => [] },
 })
 const page = usePage()
 const teams = computed(() => page.props.teams ?? [])
@@ -32,16 +31,15 @@ const intAxis = { y: { beginAtZero: true, ticks: { precision: 0 } } }
 
 const doughnutData = computed(() => ({
   labels: props.doughnut.map((d) => d.label),
-  datasets: [{ data: props.doughnut.map((d) => d.value), backgroundColor: [C.green, C.amber, C.blue, C.ink, C.red, C.gray], borderWidth: 0 }],
+  datasets: [{ data: props.doughnut.map((d) => d.value), backgroundColor: [C.gray, C.amber, C.green, C.red], borderWidth: 0 }],
 }))
 const doughnutOptions = { ...base, plugins: { legend: { position: 'bottom' } }, cutout: '62%' }
 
 const trendData = computed(() => ({
-  labels: props.attendanceTrend.labels,
+  labels: props.workOrderTrend.labels,
   datasets: [
-    { label: 'Hadir', data: props.attendanceTrend.present, borderColor: C.green, backgroundColor: C.green, tension: 0.3, pointRadius: 2 },
-    { label: 'Terlambat', data: props.attendanceTrend.late, borderColor: C.amber, backgroundColor: C.amber, tension: 0.3, pointRadius: 2 },
-    { label: 'Tidak hadir', data: props.attendanceTrend.absent, borderColor: C.red, backgroundColor: C.red, tension: 0.3, pointRadius: 2 },
+    { label: 'Dibuat', data: props.workOrderTrend.created, borderColor: C.ink, backgroundColor: C.ink, tension: 0.3, pointRadius: 2 },
+    { label: 'Selesai', data: props.workOrderTrend.done, borderColor: C.green, backgroundColor: C.green, tension: 0.3, pointRadius: 2 },
   ],
 }))
 const trendOptions = { ...base, plugins: { legend: { position: 'bottom' } }, scales: intAxis }
@@ -76,10 +74,10 @@ const reportsOptions = { ...base, plugins: { legend: { position: 'bottom' } }, s
 const hasScores = computed(() => props.radar.values.some((v) => v !== null))
 const cardList = computed(() => [
   { label: 'Karyawan Aktif', value: props.cards.employees },
-  { label: 'Sudah Absen Hari Ini', value: props.cards.present_today, sub: `${props.cards.late_today} terlambat · ${props.cards.not_yet_today} belum` },
+  { label: 'Perintah Kerja Berjalan', value: props.cards.wo_active },
+  { label: 'Perintah Selesai (periode)', value: props.cards.wo_done },
   { label: 'Rata-rata Nilai', value: props.cards.avg_score ?? '—' },
   { label: 'Total Laporan', value: props.cards.reports },
-  { label: 'Izin / Cuti Menunggu', value: props.cards.pending_leaves },
 ])
 </script>
 
@@ -110,8 +108,8 @@ const cardList = computed(() => [
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">
-      <div class="card card-body"><h3 class="mb-3 font-serif font-semibold">Absensi Hari Ini</h3><div class="h-64"><Doughnut :data="doughnutData" :options="doughnutOptions" /></div></div>
-      <div class="card card-body lg:col-span-2"><h3 class="mb-3 font-serif font-semibold">Tren Absensi (maks. 30 hari)</h3><div class="h-64"><Line :data="trendData" :options="trendOptions" /></div></div>
+      <div class="card card-body"><h3 class="mb-3 font-serif font-semibold">Perintah Kerja menurut Status</h3><div class="h-64"><Doughnut :data="doughnutData" :options="doughnutOptions" /></div></div>
+      <div class="card card-body lg:col-span-2"><h3 class="mb-3 font-serif font-semibold">Tren Perintah Kerja</h3><div class="h-64"><Line :data="trendData" :options="trendOptions" /></div></div>
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">

@@ -1,59 +1,52 @@
-# Checklist pengujian SDM V2 (Fase 1–3)
+# Checklist pengujian SDM V2
 
-Urutan disarankan. Gunakan HTTPS atau `http://localhost:8000` agar kamera berfungsi.
+Gunakan HTTPS atau `http://localhost:8000` agar kamera berfungsi. Uji juga di HP.
 
 ## 0. Persiapan
 - [ ] `composer install`, `npm install && npm run build`, salin `.env`, isi DB_*, `php artisan key:generate`, `php artisan migrate`
-- [ ] Buka aplikasi -> muncul **Setup Awal** -> buat akun Owner -> login
-- [ ] Menu **Pengaturan**: toleransi terlambat 10 menit; **Shift** sudah ada 3 shift
+- [ ] Buka aplikasi -> **Setup Awal** -> buat akun Owner -> login
 
-## 1. Akun & keamanan (Fase 1)
-- [ ] Owner: Karyawan > Tambah > centang "Buatkan akun login" > isi email + password awal sederhana
-- [ ] Login akun baru -> dipaksa ganti password
-- [ ] Login salah berkali-kali -> kena batas laju
-- [ ] "Lupa password" -> kirim permintaan -> muncul di Kelola Pengguna (Owner) -> Reset Password -> password sementara tampil SEKALI
-- [ ] Kirim permintaan ke-2 langsung -> ditolak (pending / jeda 15 menit)
-- [ ] hr-admin TIDAK bisa membuat akun / reset password
+## 1. Menu samping
+- [ ] Tombol garis tiga di kiri atas membuka menu; klik di luar / tombol X / Esc menutupnya
+- [ ] Memilih halaman menutup menu otomatis; halaman aktif ditandai garis oranye
+- [ ] Di HP: header rapi (tidak berantakan), tab bawah Beranda / Laporan / Perintah / Nilai muncul untuk karyawan
 
-## 2. Operasional (Fase 2)
-- [ ] Absen Saya: pilih shift -> Absen Datang -> kamera -> foto + watermark -> status Tepat Waktu / Terlambat sesuai jam shift
-- [ ] Absen Pulang (dengan / tanpa foto); check-in kedua di hari sama ditolak
-- [ ] Laporan Harian: status Selesai tanpa foto ditolak; dengan 1–3 foto berhasil
-- [ ] Ka. URS: Semua Laporan > Detail > Perlu Revisi + catatan; karyawan merevisi; komentar dua arah
-- [ ] Ajukan Izin -> Ka. URS bisa setujui; ajukan Cuti -> Ka. URS TIDAK bisa, Owner bisa
-- [ ] Setelah disetujui: data absensi hari kerja pada rentang itu berstatus Izin/Sakit/Cuti
-- [ ] `php artisan sdm:mark-alpha --date=YYYY-MM-DD` menandai Alfa
+## 2. Role & hak akses (Owner)
+- [ ] Menu **Role & Hak Akses** > Role Baru: buat **KA Unit** dengan *Kelola penuh* pada Data Karyawan + Perintah Kerja
+- [ ] Buat **KA Gudang** dengan *Hanya lihat* pada Data Karyawan + Perintah Kerja
+- [ ] Mencentang "Kelola" otomatis mencentang "Lihat"; "Kosongkan" membersihkan modul
+- [ ] Kelola Pengguna: pasang role KA Unit & KA Gudang ke dua akun; login masing-masing
+- [ ] KA Unit bisa tambah/ubah/hapus; KA Gudang hanya melihat (tombol kelola tidak muncul / ditolak server)
+- [ ] Centang "Melihat data SEMUA tim" mengubah cakupan data yang terlihat
+- [ ] Role yang masih dipakai tidak bisa dihapus; `super-admin` & `karyawan` tidak bisa dihapus
+- [ ] Menjalankan `php artisan db:seed` TIDAK mengembalikan hak akses role yang sudah diubah
 
-## 3. Dashboard & analisis (Fase 3)
-- [ ] Login Owner / Ka. URS: Dashboard menampilkan kartu + 7 grafik
-- [ ] Filter periode (harian/mingguan/bulanan/tahunan/kustom), tim, role
-- [ ] Karyawan biasa: dashboard personal, TANPA grafik
-- [ ] Semua Laporan: pencarian, filter status & review; ekspor Excel, PDF, **PDF + Foto**
-- [ ] Rekap, Penilaian: ekspor Excel/PDF; Form Penilaian: Cetak + Unduh PDF
+## 3. Perintah Kerja Harian
+- [ ] Buat perintah: kepala kerja + beberapa anggota + uraian; nomor `PK-...-001` terbentuk; kepala kerja tidak bisa jadi anggota
+- [ ] Kepala kerja & anggota (akun karyawan biasa) melihat perintah itu; orang lain tidak
+- [ ] Kepala kerja: Direncanakan -> Berjalan -> Selesai (isi tanggal selesai)
+- [ ] Laporan Harian: dropdown "Perintah Kerja" menampilkan perintah milik sendiri; laporan tampil di detail perintah
 
----
-# Tambahan Fase 4
+## 4. Penilaian Anggota
+- [ ] Sebelum Selesai: tombol nilai tidak ada. Setelah Selesai: kepala kerja menilai tiap anggota (5 kriteria + catatan)
+- [ ] Anggota hanya melihat nilainya sendiri; kepala kerja melihat semua; menu **Penilaian Anggota** + ekspor Excel/PDF
 
-## 4. Notifikasi internal
-- [ ] Lonceng di header menampilkan angka; klik notifikasi -> menuju halaman terkait dan angka berkurang
-- [ ] Karyawan check-in terlambat -> Ka. URS/Owner dapat notifikasi
-- [ ] Ubah jam shift -> semua karyawan berakun dapat notifikasi
-- [ ] `php artisan sdm:remind-reports` -> karyawan yang sudah check-in tapi belum lapor dapat pengingat
+## 5. History Card
+- [ ] Perintah Selesai muncul di **History Card** (uraian, tgl mulai, tgl selesai, kepala kerja, anggota)
+- [ ] Filter/pencarian; ekspor Excel & PDF; **Kartu** -> Cetak & Unduh PDF
 
-## 5. Mode offline (uji di HP; buka halaman dulu saat online)
-- [ ] Buka **Laporan Harian**, matikan data/wifi, isi laporan + foto -> muncul "disimpan di perangkat"
-- [ ] Bar oranye: "1 data menunggu sinkron"; nyalakan sinyal -> terkirim otomatis, laporan muncul di riwayat
-- [ ] Buka **Absen Saya**, matikan sinyal, Absen Datang -> tersimpan; nyalakan sinyal -> tercatat berstatus **Offline**
-- [ ] Owner/Ka. URS menerima notifikasi "Absen offline disinkronkan"; di halaman Absensi tampil badge **Offline**
-- [ ] Matikan sinyal tepat saat kirim lalu nyalakan lagi: tidak ada data ganda
-- [ ] Data yang ditolak server (mis. sudah check-in) muncul "gagal" di bar, bisa Hapus / Coba lagi
+## 6. Laporan harian, dashboard, rekap
+- [ ] Laporan Selesai tanpa foto ditolak; dengan 1–3 foto dari kamera berhasil (kamera terbuka di HP)
+- [ ] Review Ka. URS, komentar, revisi karyawan, ekspor PDF + Foto
+- [ ] Dashboard grafik (Owner/role dengan izin Grafik): kartu perintah kerja, doughnut status, tren, radar, dll.
 
-## 6. Audit log (Owner)
-- [ ] Ubah data karyawan -> Log Aktivitas > Detail menampilkan perubahan dari -> ke, IP, perangkat
-- [ ] Filter tanggal / pengguna / aksi / kata kunci; ekspor Excel dan PDF
+## 7. Backup Data
+- [ ] 4 kartu backup tampil; **Backup Database** membuat file dan bisa diunduh
+- [ ] PDF **Data Owner**, **Data Role Tambahan**, **Data Karyawan**, dan **PDF Gabungan** terunduh dan terbaca
+- [ ] PDF tidak memuat gaji/rekening/NPWP/BPJS/password
 
-## 7. Mobile & PWA (uji di HP, HTTPS)
-- [ ] Muncul "Pasang Aplikasi" (Android Chrome) / Add to Home Screen (iOS); ikon & mode layar penuh tampil
-- [ ] Karyawan: tab bawah Beranda / Absen / Laporan / Cuti / Notif berfungsi
-- [ ] Tombol & isian mudah disentuh; tabel bisa digeser; kamera terbuka
-- [ ] Tanpa sinyal membuka aplikasi dari ikon -> halaman "Sedang Offline" (bukan error browser)
+## 8. Lainnya
+- [ ] Lupa password -> permintaan muncul di Kelola Pengguna (Owner) -> Reset -> password sementara tampil sekali
+- [ ] Mode offline: matikan sinyal, isi Laporan Harian + foto -> tersimpan di perangkat -> kirim otomatis saat online, tanpa data ganda
+- [ ] Log Aktivitas: ubah role/karyawan -> detail menampilkan perubahan dari -> ke; ekspor
+- [ ] Notifikasi lonceng bekerja; "Pasang Aplikasi" muncul di HP

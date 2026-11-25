@@ -24,7 +24,7 @@
     @php $r = $it['row']; @endphp
     <div class="item">
       <div class="head">{{ $r['employee'] }} &middot; {{ \Carbon\Carbon::parse($r['date'])->format('d/m/Y') }} &middot; {{ $r['status_label'] }}</div>
-      <div class="meta">Tim {{ $r['team'] ?: '-' }} &middot; {{ $r['shift'] ?: '-' }} &middot; {{ $r['area'] }} &middot; {{ $r['start'] }}-{{ $r['end'] }} ({{ $r['hours'] }} jam) &middot; Review: {{ $r['review_label'] }}</div>
+      <div class="meta">Tim {{ $r['team'] ?: '-' }} &middot; {{ $r['area'] }} &middot; {{ $r['start'] }}-{{ $r['end'] }} ({{ $r['hours'] }} jam) &middot; Review: {{ $r['review_label'] }}</div>
       <div>{{ $r['task'] }}</div>
       @if ($r['issue'])<div class="issue">Kendala: {{ $r['issue'] }}</div>@endif
       @if (count($it['images']))

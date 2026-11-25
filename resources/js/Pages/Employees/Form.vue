@@ -231,7 +231,7 @@ function submit() {
         <div class="card-body space-y-3">
           <label class="flex items-center gap-2 text-sm text-ink-700 dark:text-ink-200">
             <input v-model="form.create_account" type="checkbox" class="rounded border-ink-300 text-seal-600 focus:ring-seal-500" />
-            Buatkan akun login untuk karyawan ini (laporan harian, absen, cuti)
+            Buatkan akun login untuk karyawan ini (laporan harian, perintah kerja, nilai)
           </label>
           <div v-if="form.create_account" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
             <div>

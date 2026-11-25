@@ -35,7 +35,7 @@ function emailHref(r) {
   <AppLayout>
     <Head title="Rekap" />
     <template #title>Rekap Kinerja</template>
-    <template #actions><ExportButtons route-name="recap.export" :params="exportParams" /></template>
+    <template #actions><ExportButtons v-if="($page.props.auth.user.permissions ?? []).includes('reports.export')" route-name="recap.export" :params="exportParams" /></template>
 
     <PeriodFilter route-name="recap.index" :period="period" :period-labels="periodLabels" :extra="{ team: filters.team }">
       <template #default="{ f, apply }">

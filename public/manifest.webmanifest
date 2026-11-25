@@ -1,7 +1,7 @@
 {
   "name": "SDM PMKCM V Indarung 5",
   "short_name": "SDM PMKCM V",
-  "description": "Manajemen SDM: absensi, laporan harian, dan penilaian outsourcing.",
+  "description": "Manajemen SDM: perintah kerja, laporan harian, penilaian, dan History Card.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
@@ -26,9 +26,9 @@
   "id": "/",
   "shortcuts": [
     {
-      "name": "Absen",
-      "short_name": "Absen",
-      "url": "/my/attendances",
+      "name": "Laporan Harian",
+      "short_name": "Laporan",
+      "url": "/daily-reports",
       "icons": [
         {
           "src": "/icons/icon-192.png",
@@ -37,9 +37,9 @@
       ]
     },
     {
-      "name": "Laporan Harian",
-      "short_name": "Laporan",
-      "url": "/daily-reports",
+      "name": "Perintah Kerja",
+      "short_name": "Perintah",
+      "url": "/work-orders",
       "icons": [
         {
           "src": "/icons/icon-192.png",

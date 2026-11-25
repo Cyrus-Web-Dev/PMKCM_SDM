@@ -1,5 +1,5 @@
 /* Service worker SDM PMKCM V: HANYA menyimpan berkas statis (JS/CSS/gambar) agar aplikasi cepat dibuka & bisa dipasang
-   di HP. Halaman dan data login TIDAK pernah disimpan. Absen & laporan wajib online (waktu resmi dicatat server). */
+   di HP. Halaman dan data login TIDAK pernah disimpan. Pengiriman data butuh koneksi; laporan yang dibuat offline diantre di perangkat. */
 const CACHE = 'sdm-static-v2'
 const OFFLINE = '/offline.html'
 

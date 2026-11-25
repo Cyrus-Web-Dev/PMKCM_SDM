@@ -3,26 +3,24 @@
 namespace App\Http\Controllers;
 
 use App\Models\Assessment;
-use App\Models\Attendance;
 use App\Models\DailyReport;
-use App\Models\Leave;
+use App\Models\WorkOrder;
 use App\Services\AnalyticsService;
-use App\Services\HolidayService;
-use App\Services\LeaveService;
 use App\Support\Period;
 use Illuminate\Http\Request;
-use Spatie\Permission\Models\Role;
 use Inertia\Inertia;
+use Spatie\Permission\Models\Role;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, HolidayService $holidays, LeaveService $leaveService, AnalyticsService $analytics)
+    public function index(Request $request, AnalyticsService $analytics)
     {
         $user = $request->user();
 
-        // Dashboard grafik HANYA untuk Owner & Ka. URS (izin dashboard.analytics). Lainnya: dashboard personal.
+        // Dashboard grafik HANYA untuk pemegang izin dashboard.analytics (Owner & Ka. URS secara bawaan).
+        // Lainnya mendapat dashboard personal.
         if (! $user->can('dashboard.analytics')) {
-            return $this->employeeDashboard($user, $holidays, $leaveService);
+            return $this->employeeDashboard($user);
         }
 
         $request->validate([
@@ -38,26 +36,12 @@ class DashboardController extends Controller
             'periodLabels' => Period::LABELS + ['custom' => 'Kustom'],
             'filters' => ['team' => $request->input('team', ''), 'role' => $request->input('role', '')],
             'roles' => Role::orderBy('name')->pluck('name'),
-            'upcoming_holidays' => $holidays->upcoming(5),
         ]);
     }
 
-    private function employeeDashboard($user, HolidayService $holidays, LeaveService $leaveService)
+    private function employeeDashboard($user)
     {
         $employee = $user->employee;
-
-        $todayRecord = null;
-        $balances = [];
-        $pendingLeaves = 0;
-
-        if ($employee) {
-            // Check-in yang belum check-out (termasuk shift malam yang dimulai kemarin) diprioritaskan.
-            $todayRecord = Attendance::where('employee_id', $employee->id)->whereNotNull('check_in')->whereNull('check_out')
-                ->whereDate('date', '>=', today()->subDay()->toDateString())->orderByDesc('date')->first(['check_in', 'check_out', 'status', 'late_minutes'])
-                ?? Attendance::where('employee_id', $employee->id)->whereDate('date', today())->first(['check_in', 'check_out', 'status', 'late_minutes']);
-            $balances = $leaveService->balances($employee);
-            $pendingLeaves = Leave::where('employee_id', $employee->id)->where('status', 'pending')->count();
-        }
 
         return Inertia::render('Dashboard/Employee', [
             'employee' => $employee ? [
@@ -66,12 +50,9 @@ class DashboardController extends Controller
                 'department' => $employee->department?->name,
                 'join_date' => $employee->join_date?->toDateString(),
             ] : null,
-            'today' => $todayRecord,
-            'balances' => $balances,
-            'pending_leaves' => $pendingLeaves,
             'today_reports' => $employee ? DailyReport::where('employee_id', $employee->id)->whereDate('report_date', today())->count() : 0,
+            'work_orders_active' => $employee ? WorkOrder::involving($employee->id)->whereIn('status', ['direncanakan', 'berjalan'])->count() : 0,
             'latest_assessment' => $employee ? Assessment::where('employee_id', $employee->id)->orderByDesc('period')->first()?->toRow() : null,
-            'upcoming_holidays' => $holidays->upcoming(5),
         ]);
     }
 }

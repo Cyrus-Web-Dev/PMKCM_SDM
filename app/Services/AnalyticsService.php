@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Assessment;
-use App\Models\DailyReport;
 use App\Models\Employee;
 use App\Models\User;
 use App\Support\Period;
@@ -33,39 +32,33 @@ class AnalyticsService
             ->orderBy('full_name')->get(['id', 'full_name', 'team']);
         $ids = $employees->pluck('id')->all();
 
-        // ---------- kartu ----------
-        $attToday = DB::table('attendances')->whereIn('employee_id', $ids)->whereDate('date', $today->toDateString())
-            ->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
-        $recorded = (int) $attToday->sum();
-
         $score = DB::table('assessments')->whereIn('employee_id', $ids)->whereBetween('period', [$p['from'], $p['to']])
             ->selectRaw('avg(quality) as q, avg(discipline) as d, avg(teamwork) as t, avg(initiative) as i, avg(safety) as s, avg(total) as total')->first();
 
+        $orders = fn () => DB::table('work_orders')->when($team, fn ($q, $t) => $q->where('team', $t));
+
         $cards = [
             'employees' => count($ids),
-            'present_today' => (int) (($attToday['hadir'] ?? 0) + ($attToday['terlambat'] ?? 0) + ($attToday['wfh'] ?? 0)),
-            'late_today' => (int) ($attToday['terlambat'] ?? 0),
-            'not_yet_today' => max(0, count($ids) - $recorded),
+            'wo_active' => $orders()->where('status', 'berjalan')->count(),
+            'wo_done' => $orders()->where('status', 'selesai')->whereBetween('end_date', [$p['from'], $p['to']])->count(),
             'avg_score' => $score?->total !== null ? round((float) $score->total, 1) : null,
             'reports' => DB::table('daily_reports')->whereIn('employee_id', $ids)->whereBetween('report_date', [$p['from'], $p['to']])->count(),
-            'pending_leaves' => DB::table('leaves')->whereIn('employee_id', $ids)->where('status', 'pending')->count(),
         ];
 
-        // ---------- absensi hari ini (doughnut) ----------
+        // Perintah kerja menurut status (dibuat pada periode terpilih).
+        $byStatus = $orders()->whereBetween('order_date', [$p['from'], $p['to']])->selectRaw('status, count(*) as n')->groupBy('status')->pluck('n', 'status');
         $doughnut = [
-            ['label' => 'Tepat Waktu', 'value' => (int) ($attToday['hadir'] ?? 0) + (int) ($attToday['wfh'] ?? 0)],
-            ['label' => 'Terlambat', 'value' => (int) ($attToday['terlambat'] ?? 0)],
-            ['label' => 'Izin / Sakit', 'value' => (int) ($attToday['izin'] ?? 0) + (int) ($attToday['sakit'] ?? 0)],
-            ['label' => 'Cuti', 'value' => (int) ($attToday['cuti'] ?? 0)],
-            ['label' => 'Alfa', 'value' => (int) ($attToday['alpha'] ?? 0)],
-            ['label' => 'Belum Absen', 'value' => $cards['not_yet_today']],
+            ['label' => 'Direncanakan', 'value' => (int) ($byStatus['direncanakan'] ?? 0)],
+            ['label' => 'Berjalan', 'value' => (int) ($byStatus['berjalan'] ?? 0)],
+            ['label' => 'Selesai', 'value' => (int) ($byStatus['selesai'] ?? 0)],
+            ['label' => 'Dibatalkan', 'value' => (int) ($byStatus['dibatalkan'] ?? 0)],
         ];
 
         return [
             'period' => $p,
             'cards' => $cards,
             'doughnut' => $doughnut,
-            'attendanceTrend' => $this->attendanceTrend($ids, $p, $today),
+            'workOrderTrend' => $this->workOrderTrend($p, $team),
             'radar' => [
                 'labels' => array_values(Assessment::CRITERIA),
                 'values' => array_map(fn ($v) => $v !== null ? round((float) $v, 1) : null, [$score?->q, $score?->d, $score?->t, $score?->i, $score?->s]),
@@ -82,31 +75,45 @@ class AnalyticsService
         ];
     }
 
-    private function attendanceTrend(array $ids, array $p, Carbon $today): array
+    /** Daftar kunci waktu berurutan + labelnya: per hari (rentang <= 31 hari) atau per bulan (lebih panjang). */
+    private function buckets(array $p): array
     {
-        $end = Carbon::parse($p['to'])->gt($today) ? $today->copy() : Carbon::parse($p['to']);
-        $start = Carbon::parse($p['from']);
-        if ($start->diffInDays($end, true) > 29) {
-            $start = $end->copy()->subDays(29);
+        $from = Carbon::parse($p['from']);
+        $to = Carbon::parse($p['to']);
+        $daily = $from->diffInDays($to, true) <= 30;
+
+        $keys = [];
+        $cursor = $daily ? $from->copy() : $from->copy()->startOfMonth();
+        while ($cursor->lte($to)) {
+            $key = $daily ? $cursor->toDateString() : $cursor->format('Y-m');
+            $keys[$key] = $daily ? $cursor->format('d/m') : substr(Assessment::MONTHS[(int) $cursor->format('n') - 1], 0, 3).' '.$cursor->format('y');
+            $daily ? $cursor->addDay() : $cursor->addMonth();
         }
 
-        $map = [];
-        DB::table('attendances')->whereIn('employee_id', $ids)->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->selectRaw('date, status, count(*) as n')->groupBy('date', 'status')->get()
-            ->each(function ($r) use (&$map) {
-                $map[substr((string) $r->date, 0, 10)][$r->status] = (int) $r->n;
+        return [$daily, $keys];
+    }
+
+    private function workOrderTrend(array $p, ?string $team): array
+    {
+        [$daily, $keys] = $this->buckets($p);
+        $key = fn ($d) => $daily ? substr((string) $d, 0, 10) : substr((string) $d, 0, 7);
+        $base = fn () => DB::table('work_orders')->when($team, fn ($q, $t) => $q->where('team', $t));
+
+        $created = $done = [];
+        $base()->whereBetween('order_date', [$p['from'], $p['to']])->selectRaw('order_date as d, count(*) as n')->groupBy('order_date')->get()
+            ->each(function ($r) use (&$created, $key) {
+                $created[$key($r->d)] = ($created[$key($r->d)] ?? 0) + (int) $r->n;
+            });
+        $base()->where('status', 'selesai')->whereBetween('end_date', [$p['from'], $p['to']])->selectRaw('end_date as d, count(*) as n')->groupBy('end_date')->get()
+            ->each(function ($r) use (&$done, $key) {
+                $done[$key($r->d)] = ($done[$key($r->d)] ?? 0) + (int) $r->n;
             });
 
-        $labels = $present = $late = $absent = [];
-        for ($d = $start->copy(); $d->lte($end); $d->addDay()) {
-            $row = $map[$d->toDateString()] ?? [];
-            $labels[] = $d->format('d/m');
-            $present[] = ($row['hadir'] ?? 0) + ($row['wfh'] ?? 0);
-            $late[] = $row['terlambat'] ?? 0;
-            $absent[] = ($row['izin'] ?? 0) + ($row['sakit'] ?? 0) + ($row['cuti'] ?? 0) + ($row['alpha'] ?? 0);
-        }
-
-        return ['labels' => $labels, 'present' => $present, 'late' => $late, 'absent' => $absent];
+        return [
+            'labels' => array_values($keys),
+            'created' => array_map(fn ($k) => $created[$k] ?? 0, array_keys($keys)),
+            'done' => array_map(fn ($k) => $done[$k] ?? 0, array_keys($keys)),
+        ];
     }
 
     private function teamScores(array $ids, array $p): array
@@ -137,12 +144,10 @@ class AnalyticsService
         return ['labels' => $labels, 'values' => $values];
     }
 
-    /** Laporan per hari (rentang <= 31 hari) atau per bulan (rentang lebih panjang), dipisah menurut status. */
+    /** Laporan per hari / per bulan, dipisah menurut status. */
     private function reportsChart(array $ids, array $p): array
     {
-        $from = Carbon::parse($p['from']);
-        $to = Carbon::parse($p['to']);
-        $daily = $from->diffInDays($to, true) <= 30;
+        [$daily, $keys] = $this->buckets($p);
 
         $map = [];
         DB::table('daily_reports')->whereIn('employee_id', $ids)->whereBetween('report_date', [$p['from'], $p['to']])
@@ -152,19 +157,9 @@ class AnalyticsService
                 $map[$key][$r->status] = ($map[$key][$r->status] ?? 0) + (int) $r->n;
             });
 
-        $labels = $selesai = $proses = $kendala = [];
-        $cursor = $daily ? $from->copy() : $from->copy()->startOfMonth();
-        while ($cursor->lte($to)) {
-            $key = $daily ? $cursor->toDateString() : $cursor->format('Y-m');
-            $row = $map[$key] ?? [];
-            $labels[] = $daily ? $cursor->format('d/m') : substr(Assessment::MONTHS[(int) $cursor->format('n') - 1], 0, 3).' '.$cursor->format('y');
-            $selesai[] = $row['selesai'] ?? 0;
-            $proses[] = $row['proses'] ?? 0;
-            $kendala[] = $row['kendala'] ?? 0;
-            $daily ? $cursor->addDay() : $cursor->addMonth();
-        }
+        $col = fn (string $status) => array_map(fn ($k) => $map[$k][$status] ?? 0, array_keys($keys));
 
-        return ['labels' => $labels, 'selesai' => $selesai, 'proses' => $proses, 'kendala' => $kendala];
+        return ['labels' => array_values($keys), 'selesai' => $col('selesai'), 'proses' => $col('proses'), 'kendala' => $col('kendala')];
     }
 
     private function ranking(array $ids, array $p): array

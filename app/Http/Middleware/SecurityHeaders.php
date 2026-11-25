@@ -25,9 +25,9 @@ class SecurityHeaders
         // Jangan bocorkan URL penuh (bisa mengandung token) ke situs lain saat user klik link keluar.
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-        // Matikan akses ke API browser sensitif yang tidak dipakai aplikasi ini secara default,
-        // KECUALI geolocation (dipakai fitur absen check-in/out).
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), payment=(), usb=()');
+        // Matikan akses ke API browser sensitif yang tidak dipakai aplikasi ini, KECUALI kamera
+        // (dipakai untuk foto bukti kerja di Laporan Harian; hanya untuk halaman kita sendiri).
+        $response->headers->set('Permissions-Policy', 'camera=(self), microphone=(), geolocation=(), payment=(), usb=()');
 
         // HSTS: paksa HTTPS selama 1 tahun, HANYA dikirim kalau koneksi memang sudah HTTPS
         // (mengirim ini lewat HTTP di localhost akan mengunci browser ke HTTPS yang belum ada -> jangan).
@@ -42,12 +42,13 @@ class SecurityHeaders
         if ($mode === 'report-only' || $mode === 'enforce') {
             $policy = implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+                "script-src 'self' 'unsafe-inline'",
                 "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
                 "font-src 'self' https://fonts.gstatic.com",
                 "img-src 'self' data: blob:",
                 "connect-src 'self'",
-                "frame-src https://challenges.cloudflare.com",
+                "media-src 'self' blob:",
+                "frame-src 'none'",
                 "frame-ancestors 'none'",
                 "form-action 'self'",
                 "base-uri 'self'",
