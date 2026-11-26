@@ -16,8 +16,6 @@ class EmployeeResource extends JsonResource
             'gender' => $this->gender,
             'phone' => $this->phone,
             'personal_email' => $this->personal_email,
-            'department' => $this->whenLoaded('department', fn () => $this->department ? ['id' => $this->department->id, 'name' => $this->department->name] : null),
-            'position' => $this->whenLoaded('position', fn () => $this->position ? ['id' => $this->position->id, 'title' => $this->position->title] : null),
             'team' => $this->team,
             'employment_type' => $this->employment_type,
             'employment_type_label' => $this->employment_type_label,

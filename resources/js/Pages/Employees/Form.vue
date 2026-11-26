@@ -5,8 +5,6 @@ import { Head, useForm, Link } from '@inertiajs/vue3'
 
 const props = defineProps({
   employee: Object,
-  departments: Array,
-  positions: Array,
   supervisors: Array,
   canCreateAccount: Boolean,
   roles: { type: Array, default: () => [] },
@@ -26,8 +24,6 @@ const form = useForm({
   marital_status: props.employee?.marital_status ?? 'single',
   dependents_count: props.employee?.dependents_count ?? 0,
 
-  department_id: props.employee?.department_id ?? '',
-  position_id: props.employee?.position_id ?? '',
   supervisor_id: props.employee?.supervisor_id ?? '',
   team: props.employee?.team ?? '',
 
@@ -56,9 +52,6 @@ function onPhotoChange(e) {
   photoPreview.value = file ? URL.createObjectURL(file) : (props.employee?.photo_url ?? null)
 }
 
-const filteredPositions = computed(() =>
-  form.department_id ? props.positions.filter(p => String(p.department_id) === String(form.department_id)) : props.positions
-)
 
 function submit() {
   if (isEdit.value) {
@@ -146,25 +139,8 @@ function submit() {
         <div class="card-header"><h2 class="font-serif font-semibold">Kepegawaian</h2></div>
         <div class="card-body grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label class="label">Departemen</label>
-            <select v-model="form.department_id" class="input">
-              <option value="">—</option>
-              <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-            </select>
-          </div>
-          <div>
-            <label class="label">Jabatan</label>
-            <select v-model="form.position_id" class="input">
-              <option value="">—</option>
-              <option v-for="p in filteredPositions" :key="p.id" :value="p.id">{{ p.title }}</option>
-            </select>
-          </div>
-          <div>
             <label class="label">Tim Kerja</label>
-            <select v-model="form.team" class="input">
-              <option value="">—</option>
-              <option v-for="t in $page.props.teams" :key="t" :value="t">{{ t }}</option>
-            </select>
+            <input v-model="form.team" class="input" maxlength="30" placeholder="Tim" />
             <p v-if="form.errors.team" class="error-text">{{ form.errors.team }}</p>
           </div>
           <div>

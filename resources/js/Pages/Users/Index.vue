@@ -32,6 +32,10 @@ function resetForRequest(r) {
 function dismissRequest(r) {
   router.post(route('users.reset-requests.dismiss', r.id), {}, { preserveScroll: true })
 }
+function destroyUser(user) {
+  if (!confirm(`Hapus akun ${user.name} (${user.email}) secara permanen? Data karyawannya tidak ikut terhapus, tetapi akun ini tidak bisa login lagi.`)) return
+  router.delete(route('users.destroy', user.id), { preserveScroll: true })
+}
 function toggleActive(user) {
   router.post(route('users.toggle-active', user.id), {}, { preserveScroll: true })
 }
@@ -128,6 +132,7 @@ function saveRoles() {
                   <button v-if="(u.status === 'active' || u.status === 'inactive') && u.id !== myId && (iAmSuper || !u.roles.includes('super-admin'))" @click="toggleActive(u)" class="btn-ghost btn-sm">
                     {{ u.status === 'active' ? 'Nonaktifkan' : 'Aktifkan' }}
                   </button>
+                  <button v-if="u.id !== myId && (iAmSuper || !u.roles.includes('super-admin'))" @click="destroyUser(u)" class="btn-ghost btn-sm text-red-600">Hapus</button>
                 </div>
               </td>
             </tr>

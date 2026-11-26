@@ -25,7 +25,7 @@ return new class extends Migration
         }
 
         foreach (['attendances', 'leaves', 'leave_balances', 'leave_types', 'company_holidays', 'shifts', 'settings'] as $table) {
-            DB::statement("DROP TABLE IF EXISTS \"{$table}\" CASCADE");
+            $this->dropTable($table);
         }
 
         // Hak akses milik modul yang dihapus (role_has_permissions ikut terhapus lewat cascade).
@@ -35,6 +35,20 @@ return new class extends Migration
         })->delete();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /** PostgreSQL: DROP ... CASCADE. MySQL/MariaDB: matikan pemeriksaan foreign key sementara lalu drop. */
+    private function dropTable(string $table): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("DROP TABLE IF EXISTS \"{$table}\" CASCADE");
+
+            return;
+        }
+
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists($table);
+        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void

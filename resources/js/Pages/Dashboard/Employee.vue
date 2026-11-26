@@ -18,7 +18,7 @@ const page = usePage()
 
     <template v-else>
       <p class="text-sm text-ink-500 dark:text-ink-400">
-        {{ employee.position || '—' }} · {{ employee.department || '—' }} · bergabung {{ fmtDate(employee.join_date) }}
+        Bergabung {{ fmtDate(employee.join_date) }}
       </p>
 
       <div class="grid gap-4 md:grid-cols-3">

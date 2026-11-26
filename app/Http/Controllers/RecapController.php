@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Models\Assessment;
 use App\Models\DailyReport;
 use App\Models\Employee;
@@ -48,7 +49,7 @@ class RecapController extends Controller
         [$employees, $p] = $this->scope($request);
 
         $rows = $this->rows($employees, $p, false)->map(fn (array $r) => [
-            $r['name'], $r['nip'], $r['team'], $r['position'], $r['reports'], $r['done'], $r['hours'],
+            $r['name'], $r['nip'], $r['team'], $r['reports'], $r['done'], $r['hours'],
             $r['score'] ?? '-', $r['grade'],
         ])->all();
 
@@ -57,7 +58,7 @@ class RecapController extends Controller
             'rekap-'.$p['type'].'-'.$p['date'],
             'Rekap Kinerja',
             "{$p['type_label']}: {$p['label']}".($request->input('team') ? ' · Tim '.$request->input('team') : ''),
-            ['Nama', 'NIP', 'Tim', 'Jabatan', 'Jumlah Laporan', 'Selesai', 'Total Jam', 'Nilai Rata-rata', 'Predikat'],
+            ['Nama', 'NIP', 'Tim', 'Jumlah Laporan', 'Selesai', 'Total Jam', 'Nilai Rata-rata', 'Predikat'],
             $rows
         );
     }
@@ -80,7 +81,7 @@ class RecapController extends Controller
 
         DailyReport::whereIn('employee_id', $ids)
             ->whereBetween('report_date', [$p['from'], $p['to']])
-            ->selectRaw("employee_id, count(*) as n, sum(case when status = 'selesai' then 1 else 0 end) as done, sum(".DailyReport::HOURS_SQL.') as hours')
+            ->selectRaw("employee_id, count(*) as n, sum(case when status = 'selesai' then 1 else 0 end) as done, sum(".Sql::hours().') as hours')
             ->groupBy('employee_id')->get()
             ->each(function ($r) use (&$out) {
                 $out[$r->employee_id]['reports'] = (int) $r->n;
@@ -111,12 +112,12 @@ class RecapController extends Controller
         $p = Period::resolve($request->input('period'), $request->input('date'));
 
         $employees = TeamScope::constrainEmployees(
-            Employee::query()->with(['position:id,title', 'user:id,email'])->where('employment_status', 'active'),
+            Employee::query()->with('user:id,email')->where('employment_status', 'active'),
             $request->user()
         )
-            ->when($request->input('team'), fn ($q, $team) => $q->where('team', $team))
+            ->when($request->input('team'), fn ($q, $team) => $q->where('team', Sql::like(), Sql::contains($team)))
             ->orderBy('full_name')
-            ->get(['id', 'full_name', 'nip', 'team', 'position_id', 'user_id', 'personal_email']);
+            ->get(['id', 'full_name', 'nip', 'team', 'user_id', 'personal_email']);
 
         return [$employees, $p];
     }
@@ -133,7 +134,6 @@ class RecapController extends Controller
                 'name' => $e->full_name,
                 'nip' => $e->nip,
                 'team' => $e->team,
-                'position' => $e->position?->title,
                 'reports' => $s['reports'],
                 'done' => $s['done'],
                 'hours' => $s['hours'],

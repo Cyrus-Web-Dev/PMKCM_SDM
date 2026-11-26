@@ -81,7 +81,7 @@ class AuthController extends Controller
 
     private function userPayload(User $user): array
     {
-        $user->loadMissing('employee.department', 'employee.position');
+        $user->loadMissing('employee');
 
         return [
             'id' => $user->id,
@@ -93,8 +93,6 @@ class AuthController extends Controller
                 'id' => $user->employee->id,
                 'nip' => $user->employee->nip,
                 'full_name' => $user->employee->full_name,
-                'department' => $user->employee->department?->name,
-                'position' => $user->employee->position?->title,
             ] : null,
         ];
     }

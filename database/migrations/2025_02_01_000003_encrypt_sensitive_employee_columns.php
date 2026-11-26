@@ -21,7 +21,9 @@ return new class extends Migration
     public function up(): void
     {
         foreach ($this->columns as $col) {
-            DB::statement("ALTER TABLE employees ALTER COLUMN {$col} TYPE TEXT");
+            DB::statement(DB::getDriverName() === 'pgsql'
+                ? "ALTER TABLE employees ALTER COLUMN {$col} TYPE TEXT"
+                : "ALTER TABLE employees MODIFY {$col} TEXT NULL");
         }
 
         // Enkripsi data yang SUDAH ada (dilewati bila kosong/null).
@@ -57,7 +59,9 @@ return new class extends Migration
         });
 
         foreach ($this->columns as $col) {
-            DB::statement("ALTER TABLE employees ALTER COLUMN {$col} TYPE VARCHAR(50)");
+            DB::statement(DB::getDriverName() === 'pgsql'
+                ? "ALTER TABLE employees ALTER COLUMN {$col} TYPE VARCHAR(50)"
+                : "ALTER TABLE employees MODIFY {$col} VARCHAR(50) NULL");
         }
     }
 };

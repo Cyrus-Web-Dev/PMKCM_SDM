@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Models\Assessment;
 use App\Models\Employee;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Services\Notify;
 use App\Support\Exporter;
-use App\Support\Period;
 use App\Support\TeamScope;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 
-/** Penilaian outsourcing bulanan: input nilai, riwayat, nilai saya, dan Form Penilaian (cetak / PDF). */
+/** Penilaian outsourcing bulanan: input nilai, riwayat, dan nilai saya. */
 class AssessmentController extends Controller
 {
     public function __construct()
@@ -115,26 +113,6 @@ class AssessmentController extends Controller
         ]);
     }
 
-    /** Form Penilaian: lembar siap cetak untuk satu karyawan pada satu bulan. */
-    public function sheet(Request $request)
-    {
-        return Inertia::render('Assessments/Sheet', $this->sheetPayload($request) + [
-            'years' => self::years(),
-            'canPickEmployee' => $request->user()->can('performance.view'),
-            'canEmail' => $request->user()->can('performance.email'),
-        ]);
-    }
-
-    public function sheetPdf(Request $request)
-    {
-        $p = $this->sheetPayload($request);
-        abort_unless($p['employee'] && $p['assessment'], 404, 'Belum ada penilaian untuk periode ini.');
-
-        return Pdf::loadView('pdf.assessment', $p)->setPaper('a4', 'portrait')->download(
-            'form-penilaian-'.Str::slug($p['employee']['full_name']).'-'.$p['year'].'-'.str_pad((string) $p['month'], 2, '0', STR_PAD_LEFT).'.pdf'
-        );
-    }
-
     public function export(Request $request)
     {
         $request->validate(['format' => ['required', 'in:xlsx,pdf']]);
@@ -186,7 +164,7 @@ class AssessmentController extends Controller
             $query->whereMonth('period', (int) $month);
         }
         if ($team = $request->input('team')) {
-            $query->whereHas('employee', fn ($q) => $q->where('team', $team));
+            $query->whereHas('employee', fn ($q) => $q->where('team', Sql::like(), Sql::contains($team)));
         }
 
         return $query->orderByDesc('period')->orderByDesc('id');
@@ -200,65 +178,6 @@ class AssessmentController extends Controller
         }
 
         return $row;
-    }
-
-    private function sheetPayload(Request $request): array
-    {
-        $request->validate([
-            'employee_id' => ['nullable', 'integer'],
-            'month' => ['nullable', 'integer', 'between:1,12'],
-            'year' => ['nullable', 'integer', 'between:2000,2100'],
-        ]);
-
-        $user = $request->user();
-        $canAll = $user->can('performance.view');
-        $own = $user->employee;
-        abort_unless($canAll || $own, 403);
-
-        $employees = $canAll
-            ? TeamScope::constrainEmployees(Employee::where('employment_status', 'active'), $user)->orderBy('full_name')->get(['id', 'full_name', 'nip'])
-            : collect();
-
-        $target = null;
-        if ($canAll) {
-            $id = (int) $request->input('employee_id');
-            $target = $id ? $employees->firstWhere('id', $id) : $employees->first();
-        } else {
-            $target = $own;
-        }
-        $employee = $target ? Employee::with(['position:id,title', 'department:id,name'])->find($target->id) : null;
-
-        $month = (int) ($request->input('month') ?: today()->format('n'));
-        $year = (int) ($request->input('year') ?: today()->format('Y'));
-
-        $assessment = null;
-        $stat = null;
-        if ($employee) {
-            $first = Carbon::create($year, $month, 1)->toDateString();
-            $assessment = Assessment::with('assessor:id,name')->where('employee_id', $employee->id)->whereDate('period', $first)->first();
-            $stat = RecapController::stats([$employee->id], Period::resolve('bulan', $first))[$employee->id];
-        }
-
-        return [
-            'employees' => $employees,
-            'employee' => $employee ? [
-                'id' => $employee->id,
-                'full_name' => $employee->full_name,
-                'nip' => $employee->nip,
-                'position' => $employee->position?->title,
-                'department' => $employee->department?->name,
-                'team' => $employee->team,
-                'email' => $user->can('performance.email') ? $employee->contact_email : null,
-            ] : null,
-            'month' => $month,
-            'year' => $year,
-            'period_label' => Assessment::MONTHS[$month - 1].' '.$year,
-            'assessment' => $assessment?->toRow(),
-            'assessor' => $assessment?->assessor?->name,
-            'stat' => $stat,
-            'owner' => rescue(fn () => User::role('super-admin')->orderBy('id')->value('name'), null, false),
-            'criteria' => self::criteria(),
-        ];
     }
 
     /** @return array<int,array{key:string,label:string}> */

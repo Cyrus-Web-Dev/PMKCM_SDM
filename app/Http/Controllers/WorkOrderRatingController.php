@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Models\Assessment;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderRating;
@@ -75,8 +76,8 @@ class WorkOrderRatingController extends Controller
         if ($q = trim((string) $request->input('q'))) {
             $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
             $query->where(function ($w) use ($like) {
-                $w->whereHas('employee', fn ($e) => $e->where('full_name', 'ilike', $like))
-                    ->orWhereHas('workOrder', fn ($o) => $o->where('number', 'ilike', $like)->orWhere('description', 'ilike', $like));
+                $w->whereHas('employee', fn ($e) => $e->where('full_name', Sql::like(), $like))
+                    ->orWhereHas('workOrder', fn ($o) => $o->where('number', Sql::like(), $like)->orWhere('description', Sql::like(), $like));
             });
         }
 

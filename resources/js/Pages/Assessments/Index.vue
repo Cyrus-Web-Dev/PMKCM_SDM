@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Pagination from '@/Components/Pagination.vue'
 import ExportButtons from '@/Components/ExportButtons.vue'
-import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3'
+import { Head, router, useForm, usePage } from '@inertiajs/vue3'
 import { MONTHS, gradeOf, gradeBadge, mailto } from '@/utils'
 
 const props = defineProps({
@@ -11,7 +11,6 @@ const props = defineProps({
   canManage: Boolean, canEmail: Boolean, now: Object,
 })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 
 // ---------- formulir penilaian ----------
 const form = useForm({
@@ -34,10 +33,6 @@ function applyFilter() {
 const exportParams = computed(() => ({ year: props.filters.year, month: props.filters.month, team: props.filters.team }))
 
 // ---------- aksi baris ----------
-function sheetHref(a) {
-  const [y, m] = a.period.split('-')
-  return route('assessments.sheet', { employee_id: a.employee_id, month: Number(m), year: Number(y) })
-}
 function emailHref(a) {
   return mailto(a.email, `Hasil Penilaian Kinerja ${a.period_label}`, [
     `Halo ${a.employee},`, '',
@@ -108,7 +103,7 @@ function remove(a) {
           <div class="flex flex-wrap gap-2">
             <select v-model="fm" @change="applyFilter" class="input !w-auto"><option value="">Semua bulan</option><option v-for="(m, i) in MONTHS" :key="m" :value="i + 1">{{ m }}</option></select>
             <select v-model="fy" @change="applyFilter" class="input !w-auto"><option value="">Semua tahun</option><option v-for="y in years" :key="y" :value="y">{{ y }}</option></select>
-            <select v-model="ft" @change="applyFilter" class="input !w-auto"><option value="">Semua tim</option><option v-for="t in teams" :key="t" :value="t">{{ t }}</option></select>
+            <input v-model="ft" @change="applyFilter" class="input !w-auto" maxlength="30" placeholder="Tim" />
           </div>
         </div>
         <div class="overflow-x-auto">
@@ -122,7 +117,6 @@ function remove(a) {
                 <td><span :class="gradeBadge(a.total)">{{ a.total }} · {{ a.grade }}</span></td>
                 <td class="text-right">
                   <div class="flex justify-end gap-1">
-                    <Link :href="sheetHref(a)" class="btn-ghost btn-sm">Form</Link>
                     <a v-if="canEmail && a.email" :href="emailHref(a)" class="btn-ghost btn-sm">Email</a>
                     <button v-if="canManage" @click="remove(a)" class="btn-ghost btn-sm text-red-600">Hapus</button>
                   </div>

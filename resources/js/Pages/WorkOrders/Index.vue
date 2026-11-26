@@ -7,7 +7,6 @@ import { fmtDate, WO_BADGE } from '@/utils'
 
 const props = defineProps({ orders: Object, filters: Object, statuses: Object, canManage: Boolean, hasEmployee: Boolean })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 
 const f = reactive({ ...props.filters })
 function apply() {
@@ -41,7 +40,7 @@ function reset() {
       </div>
       <div>
         <label class="label">Tim</label>
-        <select v-model="f.team" class="input" @change="apply"><option value="">Semua tim</option><option v-for="t in teams" :key="t" :value="t">{{ t }}</option></select>
+        <input v-model="f.team" class="input" @change="apply" maxlength="30" placeholder="Tim" />
       </div>
       <div><label class="label">Dari</label><input v-model="f.from" type="date" class="input" @change="apply" /></div>
       <div><label class="label">Sampai</label><input v-model="f.to" type="date" class="input" @change="apply" /></div>

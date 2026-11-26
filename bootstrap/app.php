@@ -7,6 +7,7 @@ use App\Http\Middleware\ForceHttps;
 use App\Http\Middleware\ForcePasswordChange;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\SecurityHeaders;
+use App\Http\Middleware\UseCurrentUrlAsReferer;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -28,7 +29,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
         $middleware->append(SecurityHeaders::class);
 
-        $middleware->web(append: [
+        $middleware->web(prepend: [
+            UseCurrentUrlAsReferer::class,
+        ], append: [
             HandleInertiaRequests::class,
             EnsureUserIsActive::class,
             ForcePasswordChange::class,

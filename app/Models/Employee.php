@@ -15,7 +15,7 @@ class Employee extends Model
     protected $fillable = [
         'user_id', 'nip', 'full_name', 'gender', 'place_of_birth', 'date_of_birth',
         'address', 'phone', 'personal_email', 'marital_status', 'dependents_count',
-        'department_id', 'position_id', 'supervisor_id', 'team', 'employment_type',
+        'supervisor_id', 'team', 'employment_type',
         'join_date', 'contract_end_date', 'resign_date', 'employment_status',
         'base_salary', 'bank_name', 'bank_account_number', 'bank_account_name',
         'npwp', 'bpjs_kesehatan_number', 'bpjs_tk_number', 'ptkp_status',
@@ -63,15 +63,6 @@ class Employee extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
-
-    public function position(): BelongsTo
-    {
-        return $this->belongsTo(Position::class);
-    }
 
     public function supervisor(): BelongsTo
     {

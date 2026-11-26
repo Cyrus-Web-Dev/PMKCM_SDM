@@ -9,7 +9,6 @@ import { postOrQueue } from '@/offline'
 
 const props = defineProps({ reports: Array, month: String, defaultTeam: String, today: String, employeeName: String, maxPhotos: Number, workOrders: { type: Array, default: () => [] } })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 
 const form = useForm({
   report_date: props.today,
@@ -137,10 +136,7 @@ const totalHours = computed(() => props.reports.reduce((a, r) => a + r.hours, 0)
           </div>
           <div>
             <label class="label">Tim</label>
-            <select v-model="form.team" class="input">
-              <option value="">—</option>
-              <option v-for="t in teams" :key="t" :value="t">{{ t }}</option>
-            </select>
+            <input v-model="form.team" class="input" maxlength="30" placeholder="Tim" />
           </div>
         </div>
         <div v-if="!editing && workOrders.length">

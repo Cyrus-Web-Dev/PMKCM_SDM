@@ -142,9 +142,7 @@ const groups = computed(() => [
       { name: 'Semua Laporan', href: route('daily-reports.all'), show: has('daily_reports.view') },
       { name: 'Rekap', href: route('recap.index'), show: has('reports.view') },
       { name: 'Penilaian', href: route('assessments.index'), show: has('performance.view') },
-      { name: 'Form Penilaian', href: route('assessments.sheet'), show: has('performance.view') || isStaff.value },
       { name: 'Karyawan', href: route('employees.index'), show: has('employees.view') },
-      { name: 'Departemen', href: route('departments.index'), show: has('departments.view') },
     ],
   },
   {
@@ -210,7 +208,7 @@ const activeHref = computed(() => {
             <UserAvatar :src="user?.avatar_url" :name="user?.name ?? '?'" :size="32" />
             <div class="hidden text-right text-[13px] leading-tight text-ink-500 dark:text-ink-400 md:block">
               <b class="block text-ink-900 dark:text-ink-100">{{ user?.name }}</b>
-              {{ user?.employee?.position_title || (user?.roles ?? [])[0] }}
+              {{ (user?.roles ?? [])[0] }}
             </div>
           </Link>
         </div>

@@ -52,8 +52,6 @@ function deletePhoto() {
         <h2 class="font-serif font-semibold mb-3">Data Kepegawaian</h2>
         <div class="grid grid-cols-2 gap-3 text-sm">
           <div><p class="text-ink-400">NIP</p><p class="font-mono">{{ profile.employee.nip }}</p></div>
-          <div><p class="text-ink-400">Departemen</p><p>{{ profile.employee.department?.name || '-' }}</p></div>
-          <div><p class="text-ink-400">Jabatan</p><p>{{ profile.employee.position?.title || '-' }}</p></div>
           <div><p class="text-ink-400">Bergabung Sejak</p><p>{{ profile.member_since }}</p></div>
         </div>
         <p class="mt-2 text-xs text-ink-400">Hubungi Owner untuk mengubah data kepegawaian.</p>

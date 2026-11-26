@@ -11,13 +11,13 @@ class EmployeesExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return Employee::with(['department', 'position'])->orderBy('full_name')->get();
+        return Employee::orderBy('full_name')->get();
     }
 
     public function headings(): array
     {
         return [
-            'NIP', 'Nama Lengkap', 'Jenis Kelamin', 'Departemen', 'Jabatan',
+            'NIP', 'Nama Lengkap', 'Jenis Kelamin',
             'Tim', 'Tipe Kepegawaian', 'Tanggal Bergabung', 'Status', 'No. HP', 'Email Pribadi',
         ];
     }
@@ -28,8 +28,6 @@ class EmployeesExport implements FromCollection, WithHeadings, WithMapping
             $employee->nip,
             $employee->full_name,
             $employee->gender === 'L' ? 'Laki-laki' : 'Perempuan',
-            $employee->department?->name,
-            $employee->position?->title,
             $employee->team,
             $employee->employment_type_label,
             $employee->join_date?->format('d/m/Y'),

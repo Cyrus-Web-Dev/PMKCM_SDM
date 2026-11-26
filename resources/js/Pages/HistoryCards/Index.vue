@@ -8,7 +8,6 @@ import { fmtDate } from '@/utils'
 
 const props = defineProps({ cards: Object, filters: Object, employees: Array })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 
 const f = reactive({ ...props.filters })
 function apply() {
@@ -31,7 +30,7 @@ const exportParams = computed(() => ({ ...props.filters }))
 
     <div class="card card-body flex flex-wrap items-end gap-3">
       <div><label class="label">Cari</label><input v-model="f.q" class="input" placeholder="Uraian, nama, area…" @change="apply" @keyup.enter="apply" /></div>
-      <div><label class="label">Tim</label><select v-model="f.team" class="input" @change="apply"><option value="">Semua tim</option><option v-for="t in teams" :key="t" :value="t">{{ t }}</option></select></div>
+      <div><label class="label">Tim</label><input v-model="f.team" class="input" @change="apply" maxlength="30" placeholder="Tim" /></div>
       <div v-if="employees.length"><label class="label">Terlibat: karyawan</label><select v-model="f.employee_id" class="input" @change="apply"><option value="">Semua</option><option v-for="e in employees" :key="e.id" :value="e.id">{{ e.full_name }}</option></select></div>
       <div><label class="label">Selesai dari</label><input v-model="f.from" type="date" class="input" @change="apply" /></div>
       <div><label class="label">Sampai</label><input v-model="f.to" type="date" class="input" @change="apply" /></div>

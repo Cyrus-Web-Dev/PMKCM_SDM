@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * SDM V2: membuang tabel modul V1 yang tidak dipakai lagi (payroll, integrasi, rekrutmen, pelatihan,
@@ -22,8 +23,22 @@ return new class extends Migration
     public function up(): void
     {
         foreach ($this->tables as $table) {
-            DB::statement("DROP TABLE IF EXISTS \"{$table}\" CASCADE");
+            $this->dropTable($table);
         }
+    }
+
+    /** PostgreSQL: DROP ... CASCADE. MySQL/MariaDB: matikan pemeriksaan foreign key sementara lalu drop. */
+    private function dropTable(string $table): void
+    {
+        if (DB::getDriverName() === 'pgsql') {
+            DB::statement("DROP TABLE IF EXISTS \"{$table}\" CASCADE");
+
+            return;
+        }
+
+        Schema::disableForeignKeyConstraints();
+        Schema::dropIfExists($table);
+        Schema::enableForeignKeyConstraints();
     }
 
     public function down(): void

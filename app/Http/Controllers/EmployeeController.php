@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Http\Requests\StoreEmployeeRequest;
 use App\Http\Requests\UpdateEmployeeRequest;
-use App\Models\Department;
 use App\Models\Employee;
-use App\Models\Position;
 use App\Models\User;
 use App\Services\ActivityLogger;
 use App\Support\ImageProcessor;
@@ -31,21 +30,17 @@ class EmployeeController extends Controller
 
     public function index(Request $request)
     {
-        $query = Employee::query()->with(['department', 'position']);
+        $query = Employee::query();
 
         if ($search = $request->string('search')->trim()->toString()) {
             $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'ilike', "%{$search}%")
-                    ->orWhere('nip', 'ilike', "%{$search}%");
+                $q->where('full_name', Sql::like(), "%{$search}%")
+                    ->orWhere('nip', Sql::like(), "%{$search}%");
             });
         }
 
-        if ($departmentId = $request->input('department_id')) {
-            $query->where('department_id', $departmentId);
-        }
-
         if ($team = $request->input('team')) {
-            $query->where('team', $team);
+            $query->where('team', Sql::like(), Sql::contains($team));
         }
 
         if ($status = $request->input('employment_status')) {
@@ -60,8 +55,6 @@ class EmployeeController extends Controller
                 'nip' => $e->nip,
                 'full_name' => $e->full_name,
                 'photo_url' => $e->photo_url,
-                'department' => $e->department?->name,
-                'position' => $e->position?->title,
                 'team' => $e->team,
                 'employment_type' => $e->employment_type_label,
                 'employment_status' => $e->employment_status,
@@ -71,8 +64,7 @@ class EmployeeController extends Controller
 
         return Inertia::render('Employees/Index', [
             'employees' => $employees,
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'filters' => $request->only(['search', 'department_id', 'team', 'employment_status']),
+            'filters' => $request->only(['search', 'team', 'employment_status']),
         ]);
     }
 
@@ -80,8 +72,6 @@ class EmployeeController extends Controller
     {
         return Inertia::render('Employees/Form', [
             'employee' => null,
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'positions' => Position::orderBy('title')->get(['id', 'title', 'department_id']),
             'supervisors' => Employee::where('employment_status', 'active')->orderBy('full_name')->get(['id', 'full_name']),
             'canCreateAccount' => $request->user()->can('users.manage'),
             'roles' => $this->assignableRoles($request->user()),
@@ -116,7 +106,7 @@ class EmployeeController extends Controller
     public function show(Employee $employee)
     {
         $user = auth()->user();
-        $employee->load(['department', 'position', 'supervisor']);
+        $employee->load(['supervisor']);
 
         // KEAMANAN: catatan internal & tautan akun HANYA untuk yang punya employees.manage.
         if (! $user->can('employees.manage')) {
@@ -132,8 +122,6 @@ class EmployeeController extends Controller
     {
         return Inertia::render('Employees/Form', [
             'employee' => $employee,
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
-            'positions' => Position::orderBy('title')->get(['id', 'title', 'department_id']),
             'supervisors' => Employee::where('employment_status', 'active')->where('id', '!=', $employee->id)->orderBy('full_name')->get(['id', 'full_name']),
             'canCreateAccount' => $request->user()->can('users.manage'),
             'roles' => $this->assignableRoles($request->user()),

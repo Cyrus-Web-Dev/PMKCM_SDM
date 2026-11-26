@@ -1,14 +1,10 @@
 <script setup>
 import AppLayout from '@/Layouts/AppLayout.vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head } from '@inertiajs/vue3'
 import { gradeBadge } from '@/utils'
 
 defineProps({ assessments: Array, criteria: Array })
 
-function sheetHref(a) {
-  const [y, m] = a.period.split('-')
-  return route('assessments.sheet', { month: Number(m), year: Number(y) })
-}
 </script>
 
 <template>
@@ -32,7 +28,6 @@ function sheetHref(a) {
           <div class="mt-1 h-1.5 overflow-hidden bg-ink-100 dark:bg-ink-800"><div class="h-full bg-seal-500" :style="{ width: a.scores[c.key] + '%' }"></div></div>
         </div>
         <p v-if="a.note" class="mt-4 text-sm text-ink-600 dark:text-ink-300">Catatan: {{ a.note }}</p>
-        <Link :href="sheetHref(a)" class="btn-secondary btn-sm mt-4 self-start">Buka Form Penilaian</Link>
       </div>
     </div>
   </AppLayout>

@@ -39,8 +39,6 @@ class HandleInertiaRequests extends Middleware
                         'nip' => $user->employee->nip,
                         'full_name' => $user->employee->full_name,
                         'photo_url' => $user->employee->photo_url,
-                        'position_title' => $user->employee->position?->title,
-                        'department_name' => $user->employee->department?->name,
                     ] : null,
                 ] : null,
             ],
@@ -50,8 +48,6 @@ class HandleInertiaRequests extends Middleware
             'notifications_unread' => fn () => $user ? AppNotification::where('user_id', $user->id)->whereNull('read_at')->count() : 0,
             // Batas diam (menit) sebelum auto-logout di browser; 0 = nonaktif.
             'idle_timeout' => fn () => $user ? (int) config('hr.idle_timeout_minutes') : 0,
-            // Daftar tim kerja (Gudang, Cooler, Kiln, Coal Mill) untuk dropdown di berbagai halaman.
-            'teams' => config('hr.teams'),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

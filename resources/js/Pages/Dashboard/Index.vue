@@ -17,7 +17,6 @@ const props = defineProps({
   scoreTrend: Object, reportsChart: Object, topIssues: Array, ranking: Array, alerts: Object,
 })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 
 // Warna sumbu/teks mengikuti mode gelap saat halaman dimuat.
 const dark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
@@ -90,7 +89,7 @@ const cardList = computed(() => [
       <template #default="{ f, apply }">
         <div>
           <label class="label">Tim</label>
-          <select v-model="f.team" @change="apply" class="input"><option value="">Semua tim</option><option v-for="t in teams" :key="t" :value="t">{{ t }}</option></select>
+          <input v-model="f.team" @change="apply" class="input" maxlength="30" placeholder="Tim" />
         </div>
         <div>
           <label class="label">Role</label>

@@ -28,10 +28,8 @@ class UpdateEmployeeRequest extends FormRequest
             'marital_status' => ['required', Rule::in(['single', 'married', 'divorced', 'widowed'])],
             'dependents_count' => ['nullable', 'integer', 'min:0', 'max:20'],
 
-            'department_id' => ['nullable', 'exists:departments,id'],
-            'position_id' => ['nullable', 'exists:positions,id'],
             'supervisor_id' => ['nullable', 'exists:employees,id', Rule::notIn([$employeeId])],
-            'team' => ['nullable', Rule::in(config('hr.teams'))],
+            'team' => ['nullable', 'string', 'max:30'],
 
             'employment_type' => ['required', Rule::in(['tetap', 'kontrak', 'magang', 'harian'])],
             'join_date' => ['required', 'date'],
@@ -57,8 +55,6 @@ class UpdateEmployeeRequest extends FormRequest
         return [
             'nip' => 'NIP',
             'full_name' => 'nama lengkap',
-            'department_id' => 'departemen',
-            'position_id' => 'jabatan',
         ];
     }
 }

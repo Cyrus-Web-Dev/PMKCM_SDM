@@ -146,6 +146,35 @@ class UserManagementController extends Controller
             ->with('temp_password', ['name' => $user->name, 'email' => $user->email, 'password' => $temp]);
     }
 
+    /**
+     * Hapus akun login permanen. Data karyawan TIDAK ikut terhapus (hanya dilepas dari akun), sedangkan riwayat
+     * aktivitas tetap tersimpan. Owner tidak bisa menghapus dirinya sendiri maupun satu-satunya Owner.
+     */
+    public function destroy(Request $request, User $user)
+    {
+        $actor = $request->user();
+        abort_if($user->id === $actor->id, 403, 'Kamu tidak bisa menghapus akunmu sendiri.');
+
+        if ($user->hasRole('super-admin')) {
+            abort_unless($actor->hasRole('super-admin'), 403, 'Hanya Owner yang boleh menghapus akun Owner.');
+            abort_if(User::role('super-admin')->where('id', '!=', $user->id)->count() === 0, 422, 'Tidak bisa menghapus satu-satunya Owner.');
+        }
+
+        $label = "{$user->name} ({$user->email})";
+
+        DB::transaction(function () use ($user) {
+            Employee::where('user_id', $user->id)->update(['user_id' => null]);
+            $user->tokens()->delete();
+            $user->syncRoles([]);
+            $user->syncPermissions([]);
+            $user->delete();
+        });
+
+        ActivityLogger::log('user.deleted', "Menghapus akun: {$label}", null, $actor->id);
+
+        return back()->with('success', 'Akun dihapus. Data karyawannya tetap tersimpan.');
+    }
+
     /** Abaikan permintaan reset (mis. email tidak dikenal atau salah kirim). */
     public function dismissResetRequest(Request $request, PasswordResetRequest $resetRequest)
     {

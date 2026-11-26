@@ -7,7 +7,6 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3'
 
 const props = defineProps({
   employees: Object,
-  departments: Array,
   filters: Object,
 })
 
@@ -16,17 +15,15 @@ const canManage = () => (page.props.auth.user.permissions ?? []).includes('emplo
 const canExport = () => (page.props.auth.user.permissions ?? []).includes('employees.export')
 
 const search = ref(props.filters.search ?? '')
-const departmentId = ref(props.filters.department_id ?? '')
 const employmentStatus = ref(props.filters.employment_status ?? '')
 const team = ref(props.filters.team ?? '')
 
 let debounceTimer = null
-watch([search, departmentId, employmentStatus, team], () => {
+watch([search, employmentStatus, team], () => {
   clearTimeout(debounceTimer)
   debounceTimer = setTimeout(() => {
     router.get(route('employees.index'), {
       search: search.value || undefined,
-      department_id: departmentId.value || undefined,
       employment_status: employmentStatus.value || undefined,
       team: team.value || undefined,
     }, { preserveState: true, replace: true })
@@ -54,14 +51,7 @@ function destroy(employee) {
     <div class="card">
       <div class="card-header flex-col items-stretch gap-3 sm:flex-row sm:items-center">
         <input v-model="search" type="text" placeholder="Cari nama atau NIP…" class="input sm:max-w-xs" />
-        <select v-model="departmentId" class="input sm:max-w-[200px]">
-          <option value="">Semua Departemen</option>
-          <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-        </select>
-        <select v-model="team" class="input sm:max-w-[160px]">
-          <option value="">Semua Tim</option>
-          <option v-for="t in $page.props.teams" :key="t" :value="t">{{ t }}</option>
-        </select>
+        <input v-model="team" class="input sm:max-w-[160px]" maxlength="30" placeholder="Tim" />
         <select v-model="employmentStatus" class="input sm:max-w-[180px]">
           <option value="">Semua Status</option>
           <option value="active">Aktif</option>
@@ -77,7 +67,6 @@ function destroy(employee) {
             <tr>
               <th>Karyawan</th>
               <th>NIP</th>
-              <th>Departemen / Jabatan</th>
               <th>Tim</th>
               <th>Tipe</th>
               <th>Status</th>
@@ -94,10 +83,6 @@ function destroy(employee) {
                 </Link>
               </td>
               <td class="num text-ink-500">{{ e.nip }}</td>
-              <td>
-                <p class="text-ink-700 dark:text-ink-300">{{ e.department || '—' }}</p>
-                <p class="text-xs text-ink-400">{{ e.position || '—' }}</p>
-              </td>
               <td class="text-ink-600 dark:text-ink-300">{{ e.team || '—' }}</td>
               <td class="text-ink-600 dark:text-ink-300">{{ e.employment_type }}</td>
               <td><span :class="statusBadge[e.employment_status] ?? 'badge-slate'">{{ e.employment_status_label }}</span></td>
@@ -111,7 +96,7 @@ function destroy(employee) {
               </td>
             </tr>
             <tr v-if="!employees.data.length">
-              <td colspan="8" class="py-10 text-center text-sm text-ink-400">Belum ada data karyawan.</td>
+              <td colspan="7" class="py-10 text-center text-sm text-ink-400">Belum ada data karyawan.</td>
             </tr>
           </tbody>
         </table>

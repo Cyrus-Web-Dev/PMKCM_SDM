@@ -17,13 +17,6 @@ class PermissionCatalog
                 'employees.export' => ['Ekspor data karyawan ke Excel', 'Ekspor'],
             ],
         ],
-        'departments' => [
-            'label' => 'Departemen & Jabatan',
-            'permissions' => [
-                'departments.view' => ['Melihat departemen & jabatan', 'Lihat'],
-                'departments.manage' => ['Tambah, ubah, hapus departemen & jabatan', 'Kelola'],
-            ],
-        ],
         'work_orders' => [
             'label' => 'Perintah Kerja, Penilaian Anggota & History Card',
             'hint' => 'Kepala kerja & anggota selalu melihat perintah kerjanya sendiri. Kepala kerja otomatis boleh mengubah status dan menilai anggotanya.',
@@ -77,7 +70,7 @@ class PermissionCatalog
         ],
         'team' => [
             'label' => 'Cakupan Data',
-            'hint' => 'Tanpa izin ini, pemilik role hanya melihat karyawan yang atasannya adalah dirinya atau departemen yang ia pimpin. Centang untuk role setingkat Ka. Unit yang harus melihat semua tim.',
+            'hint' => 'Tanpa izin ini, pemilik role hanya melihat karyawan yang atasan langsungnya adalah dirinya. Centang untuk role setingkat Ka. Unit yang harus melihat semua tim.',
             'permissions' => [
                 'team.all' => ['Melihat data SEMUA tim', 'Semua tim'],
             ],
@@ -88,7 +81,7 @@ class PermissionCatalog
     public const DEFAULT_ROLES = [
         'karyawan' => [],
         'ka-urs' => [
-            'employees.view', 'departments.view', 'performance.view', 'performance.manage', 'performance.email',
+            'employees.view', 'performance.view', 'performance.manage', 'performance.email',
             'daily_reports.view', 'daily_reports.review', 'dashboard.analytics', 'work_orders.view', 'work_orders.manage',
             'reports.view', 'reports.export', 'team.all',
         ],

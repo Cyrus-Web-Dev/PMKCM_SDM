@@ -112,15 +112,14 @@ class DataBackupService
         }
 
         foreach ($roles as $role) {
-            $users = User::role($role->name)->with(['employee.position', 'employee.department'])->orderBy('name')->get();
+            $users = User::role($role->name)->with('employee')->orderBy('name')->get();
             $access = PermissionCatalog::summarize($role->permissions->pluck('name')->all());
 
             $blocks[] = ['type' => 'heading', 'text' => 'Role: '.$role->name];
             $blocks[] = $this->table('Hak Akses', ['Modul', 'Izin'], array_map(fn ($a) => [$a['group'], $a['levels']], $access) ?: [['(tidak ada hak akses khusus)', '']]);
-            $blocks[] = $this->table("Pengguna dengan role {$role->name} (".$users->count().')', ['Nama', 'Email', 'Status', 'NIP', 'Jabatan', 'Departemen', 'Tim', 'Dibuat'],
+            $blocks[] = $this->table("Pengguna dengan role {$role->name} (".$users->count().')', ['Nama', 'Email', 'Status', 'NIP', 'Tim', 'Dibuat'],
                 $users->map(fn (User $u) => [
-                    $u->name, $u->email, $u->status, $u->employee?->nip, $u->employee?->position?->title,
-                    $u->employee?->department?->name, $u->employee?->team, $this->dt($u->created_at),
+                    $u->name, $u->email, $u->status, $u->employee?->nip, $u->employee?->team, $this->dt($u->created_at),
                 ])->all());
             $blocks[] = $this->activityTable("Log Aktivitas pengguna role {$role->name}", $users->pluck('id')->all(), 200);
         }
@@ -155,26 +154,24 @@ class DataBackupService
             ->groupBy('uid')->map(fn ($g) => $g->pluck('name')->implode(', '));
 
         $q = DB::table('employees as e')
-            ->leftJoin('departments as d', 'd.id', '=', 'e.department_id')
-            ->leftJoin('positions as p', 'p.id', '=', 'e.position_id')
             ->leftJoin('employees as s', 's.id', '=', 'e.supervisor_id')
             ->leftJoin('users as u', 'u.id', '=', 'e.user_id')
             ->when($ids !== null, fn ($q) => $q->whereIn('e.id', $ids ?: [0]))
             ->orderBy('e.full_name');
 
         $rows = $q->get([
-            'e.nip', 'e.full_name', 'e.gender', 'e.place_of_birth', 'e.date_of_birth', 'p.title as position', 'd.name as department', 'e.team',
+            'e.nip', 'e.full_name', 'e.gender', 'e.place_of_birth', 'e.date_of_birth', 'e.team',
             'e.employment_type', 'e.employment_status', 'e.join_date', 'e.contract_end_date', 'e.phone', 'e.personal_email',
             's.full_name as supervisor', 'u.email as login_email', 'u.id as uid', 'e.deleted_at',
         ])->map(fn ($r) => [
             $r->nip, $r->full_name.($r->deleted_at ? ' (diarsipkan)' : ''), $r->gender, trim(($r->place_of_birth ?? '').', '.$this->d($r->date_of_birth), ', '),
-            $r->position, $r->department, $r->team, Employee::EMPLOYMENT_TYPE_LABELS[$r->employment_type] ?? $r->employment_type,
+            $r->team, Employee::EMPLOYMENT_TYPE_LABELS[$r->employment_type] ?? $r->employment_type,
             Employee::EMPLOYMENT_STATUS_LABELS[$r->employment_status] ?? $r->employment_status, $this->d($r->join_date), $this->d($r->contract_end_date),
             $r->phone, $r->personal_email, $r->supervisor, $r->login_email, $r->uid ? ($rolesByUser[$r->uid] ?? '') : '',
         ])->all();
 
         return $this->table($title.' ('.count($rows).')', [
-            'NIP', 'Nama', 'JK', 'Tempat, Tgl Lahir', 'Jabatan', 'Departemen', 'Tim', 'Tipe', 'Status', 'Tgl Masuk', 'Akhir Kontrak',
+            'NIP', 'Nama', 'JK', 'Tempat, Tgl Lahir', 'Tim', 'Tipe', 'Status', 'Tgl Masuk', 'Akhir Kontrak',
             'Telepon', 'Email Pribadi', 'Atasan', 'Email Login', 'Role',
         ], $rows);
     }

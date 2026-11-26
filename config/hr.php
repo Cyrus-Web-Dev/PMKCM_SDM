@@ -5,9 +5,6 @@ return [
     // Auto-logout setelah diam sekian menit (0 = nonaktif). Cocok untuk komputer bersama di pabrik.
     'idle_timeout_minutes' => (int) env('SDM_IDLE_TIMEOUT_MINUTES', 30),
 
-    // Tim kerja di pabrik (dipakai di data karyawan, Laporan Harian, Perintah Kerja, dan Rekap). Ubah di sini bila ada tim baru.
-    'teams' => ['Gudang', 'Cooler', 'Kiln', 'Coal Mill'],
-
     'security' => [
         // off | report-only | enforce  (Content-Security-Policy). Mulai dari report-only.
         'csp' => env('SDM_CSP', 'report-only'),

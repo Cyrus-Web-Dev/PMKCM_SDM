@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('kind', 10)->default('cuti');
         });
 
-        DB::table('leave_types')->where('name', 'ilike', '%sakit%')->orWhere('name', 'ilike', '%izin%')->update(['kind' => 'izin']);
+        DB::table('leave_types')->whereRaw('lower(name) like ?', ['%sakit%'])->orWhereRaw('lower(name) like ?', ['%izin%'])->update(['kind' => 'izin']);
     }
 
     public function down(): void

@@ -27,10 +27,9 @@ function fmt(d) {
         <div class="card-body text-center">
           <UserAvatar :src="employee.photo_url" :name="employee.full_name" :size="88" class="mx-auto" />
           <h2 class="mt-4 font-serif text-lg font-semibold text-ink-900 dark:text-ink-100">{{ employee.full_name }}</h2>
-          <p class="text-sm text-ink-500">{{ employee.position?.title || 'Jabatan belum diatur' }}</p>
           <p class="mt-1 text-xs font-mono text-ink-400">{{ employee.nip }}</p>
-          <div class="mt-4 flex justify-center gap-2">
-            <span class="badge-seal">{{ employee.department?.name || 'Tanpa Departemen' }}</span>
+          <div v-if="employee.team" class="mt-4 flex justify-center gap-2">
+            <span class="badge-seal">Tim {{ employee.team }}</span>
           </div>
         </div>
         <div class="card-header !border-t !border-b-0"><h3 class="text-sm font-semibold text-ink-700 dark:text-ink-300">Kontak</h3></div>

@@ -10,7 +10,6 @@ import { fmtDate, STATUS_BADGE, REVIEW_BADGE } from '@/utils'
 
 const props = defineProps({ reports: Object, period: Object, periodLabels: Object, filters: Object, summary: Object, employees: Array })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 const exportParams = computed(() => ({ period: props.period.type, date: props.period.date, team: props.filters.team, employee_id: props.filters.employee_id, q: props.filters.q, status: props.filters.status, review: props.filters.review }))
 const detailId = ref(null)
 const reload = () => router.reload({ only: ['reports', 'summary'] })
@@ -29,10 +28,7 @@ const reload = () => router.reload({ only: ['reports', 'summary'] })
       <template #default="{ f, apply }">
         <div>
           <label class="label">Tim</label>
-          <select v-model="f.team" @change="apply" class="input">
-            <option value="">Semua tim</option>
-            <option v-for="t in teams" :key="t" :value="t">{{ t }}</option>
-          </select>
+          <input v-model="f.team" @change="apply" class="input" maxlength="30" placeholder="Tim" />
         </div>
         <div>
           <label class="label">Cari</label>

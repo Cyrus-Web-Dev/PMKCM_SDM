@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Models\ActivityLog;
 use App\Models\User;
 use App\Support\Exporter;
@@ -69,13 +70,13 @@ class ActivityLogController extends Controller
         $query = ActivityLog::query()->with('user:id,name,email');
 
         if ($action = $request->input('action')) {
-            $query->where('action', 'ilike', '%'.str_replace(['%', '_'], ['\\%', '\\_'], $action).'%');
+            $query->where('action', Sql::like(), '%'.str_replace(['%', '_'], ['\\%', '\\_'], $action).'%');
         }
         if ($userId = $request->input('user_id')) {
             $query->where('user_id', $userId);
         }
         if ($q = trim((string) $request->input('q'))) {
-            $query->where('description', 'ilike', '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%');
+            $query->where('description', Sql::like(), '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%');
         }
         if ($from = $request->input('from')) {
             $query->whereDate('created_at', '>=', $from);

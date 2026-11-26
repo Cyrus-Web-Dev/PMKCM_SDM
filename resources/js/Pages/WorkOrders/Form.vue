@@ -6,7 +6,6 @@ import { Head, Link, useForm, usePage } from '@inertiajs/vue3'
 
 const props = defineProps({ order: Object, employees: Array, today: String })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 const isEdit = !!props.order
 
 const form = useForm({
@@ -77,7 +76,7 @@ function submit() {
       <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label class="label">Tim</label>
-          <select v-model="form.team" class="input"><option value="">—</option><option v-for="t in teams" :key="t" :value="t">{{ t }}</option></select>
+          <input v-model="form.team" class="input" maxlength="30" placeholder="Tim" />
         </div>
         <div>
           <label class="label">Area / Peralatan (opsional)</label>

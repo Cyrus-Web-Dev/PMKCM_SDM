@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Department;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -12,8 +11,7 @@ use Illuminate\Database\Eloquent\Builder;
  *
  * Aturan: pemegang izin "employees.manage" atau "team.all" (super-admin, hr-admin, ka-urs) = "HR-wide", melihat & bertindak atas
  * SEMUA karyawan. Pengguna lain yang punya izin modul (mis. role "manajer") hanya boleh melihat/bertindak
- * atas TIMNYA: karyawan yang atasan langsungnya (supervisor_id) adalah dia, atau karyawan di departemen
- * yang dia pimpin (departments.manager_employee_id). Tanpa data karyawan sendiri -> tidak melihat apa pun.
+ * atas TIMNYA: karyawan yang atasan langsungnya (supervisor_id) adalah dia. Tanpa data karyawan sendiri -> tidak melihat apa pun.
  */
 class TeamScope
 {
@@ -35,8 +33,7 @@ class TeamScope
         }
 
         return $query->where(function (Builder $w) use ($me) {
-            $w->where('employees.supervisor_id', $me->id)
-                ->orWhereIn('employees.department_id', Department::where('manager_employee_id', $me->id)->select('id'));
+            $w->where('employees.supervisor_id', $me->id);
         });
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Support\Sql;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\EmployeeResource;
 use App\Models\Employee;
@@ -13,15 +14,12 @@ class EmployeeController extends Controller
     {
         abort_unless($request->user()->can('employees.view'), 403);
 
-        $query = Employee::with(['department', 'position']);
+        $query = Employee::query();
 
         if ($search = $request->string('search')->trim()->toString()) {
             $query->where(function ($q) use ($search) {
-                $q->where('full_name', 'ilike', "%{$search}%")->orWhere('nip', 'ilike', "%{$search}%");
+                $q->where('full_name', Sql::like(), "%{$search}%")->orWhere('nip', Sql::like(), "%{$search}%");
             });
-        }
-        if ($departmentId = $request->integer('department_id')) {
-            $query->where('department_id', $departmentId);
         }
 
         $employees = $query->orderBy('full_name')->paginate(min($request->integer('per_page', 20), 100));
@@ -33,7 +31,7 @@ class EmployeeController extends Controller
     {
         abort_unless($request->user()->can('employees.view'), 403);
 
-        $employee->load('department', 'position', 'supervisor');
+        $employee->load('supervisor');
 
         return new EmployeeResource($employee);
     }

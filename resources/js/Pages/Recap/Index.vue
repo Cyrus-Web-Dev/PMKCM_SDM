@@ -9,7 +9,6 @@ import { fmtDate, STATUS_BADGE, gradeBadge, mailto } from '@/utils'
 
 const props = defineProps({ rows: Array, detail: Object, period: Object, periodLabels: Object, filters: Object, canEmail: Boolean })
 const page = usePage()
-const teams = computed(() => page.props.teams ?? [])
 const exportParams = computed(() => ({ period: props.period.type, date: props.period.date, team: props.filters.team }))
 
 const totals = computed(() => ({
@@ -41,10 +40,7 @@ function emailHref(r) {
       <template #default="{ f, apply }">
         <div>
           <label class="label">Tim</label>
-          <select v-model="f.team" @change="apply" class="input">
-            <option value="">Semua tim</option>
-            <option v-for="t in teams" :key="t" :value="t">{{ t }}</option>
-          </select>
+          <input v-model="f.team" @change="apply" class="input" maxlength="30" placeholder="Tim" />
         </div>
       </template>
     </PeriodFilter>
@@ -55,7 +51,7 @@ function emailHref(r) {
           <thead><tr><th>Karyawan</th><th>Tim</th><th class="text-right">Laporan</th><th class="text-right">Selesai</th><th class="text-right">Total Jam</th><th>Nilai Rata-rata</th><th v-if="canEmail"></th></tr></thead>
           <tbody>
             <tr v-for="r in rows" :key="r.id">
-              <td>{{ r.name }}<p class="text-xs text-ink-400">{{ r.position || '—' }} · <span class="font-mono">{{ r.nip }}</span></p></td>
+              <td>{{ r.name }}<p class="text-xs text-ink-400"><span class="font-mono">{{ r.nip }}</span></p></td>
               <td>{{ r.team || '—' }}</td>
               <td class="num text-right">{{ r.reports }}</td>
               <td class="num text-right">{{ r.done }}</td>

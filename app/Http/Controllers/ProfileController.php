@@ -15,7 +15,7 @@ class ProfileController extends Controller
 {
     public function edit(Request $request)
     {
-        $u = $request->user()->load('employee.department', 'employee.position');
+        $u = $request->user()->load('employee');
 
         return Inertia::render('Profile/Edit', [
             'profile' => [

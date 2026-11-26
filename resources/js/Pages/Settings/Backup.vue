@@ -45,7 +45,7 @@ function formatSize(bytes) {
 
       <div class="card card-body flex flex-col gap-2">
         <p class="font-serif text-xs font-semibold uppercase tracking-widest text-seal-600 dark:text-seal-400">4 · Data Karyawan</p>
-        <p class="flex-1 text-sm text-ink-600 dark:text-ink-300">Seluruh data karyawan beserta jabatan, departemen, tim, status, dan akun login. ({{ pdfCounts.employees }} karyawan)</p>
+        <p class="flex-1 text-sm text-ink-600 dark:text-ink-300">Seluruh data karyawan beserta tim, status kepegawaian, dan akun login. ({{ pdfCounts.employees }} karyawan)</p>
         <a :href="route('backup.pdf', 'employees')" class="btn-secondary btn-sm">Unduh PDF</a>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 Aplikasi manajemen SDM pabrik: **Perintah Kerja Harian**, **Laporan Harian** (foto bukti), **Penilaian Anggota**, **History Card**,
 penilaian bulanan, rekap, dashboard grafik, **Role & Hak Akses fleksibel**, serta backup data.
-**Laravel 11 · Inertia + Vue 3 · Tailwind · PostgreSQL.** Tampilan mengikuti template PMKCM V.
+**Laravel 11 · Inertia + Vue 3 · Tailwind · PostgreSQL _atau_ MySQL/MariaDB** (hosting cPanel). Tampilan mengikuti template PMKCM V.
 
 ## Fitur
 
@@ -12,13 +12,14 @@ penilaian bulanan, rekap, dashboard grafik, **Role & Hak Akses fleksibel**, sert
 | **Penilaian Anggota** | Setelah perintah **Selesai**, **kepala kerja menilai tiap anggota** (5 kriteria 0–100: Kualitas Kerja, Kedisiplinan, Kerja Sama, Inisiatif, Kepatuhan K3; predikat A–D). Anggota hanya melihat nilainya sendiri. Daftar + ekspor Excel/PDF. |
 | **History Card** | Arsip otomatis perintah kerja berstatus Selesai: uraian, tanggal mulai, tanggal selesai, kepala kerja, anggota kerja. Cari/filter, ekspor Excel/PDF, kartu cetak/PDF per pekerjaan. |
 | **Laporan Harian** | Isi laporan (tim, area, jam, uraian, kendala, status). **Foto bukti 1–3 dari kamera**, wajib bila status Selesai. Review Ka. URS (Disetujui / Perlu Revisi), komentar dua arah, revisi oleh karyawan, pencarian & filter, ekspor Excel/PDF (+PDF berisi foto). |
-| **Penilaian Bulanan** | Penilaian per karyawan per bulan, Form Penilaian cetak/PDF, kirim hasil lewat `mailto:`. |
+| **Penilaian Bulanan** | Penilaian per karyawan per bulan (5 kriteria), riwayat, ekspor Excel/PDF, kirim hasil lewat `mailto:`. |
 | **Rekap & Dashboard** | Rekap harian/mingguan/bulanan/tahunan. Dashboard grafik (Chart.js) untuk pemegang izin *Dashboard Grafik*. |
 | **Role & Hak Akses** | **Owner bebas membuat role baru** (mis. KA Unit, KA Gudang) dan menentukan hak aksesnya dengan **checklist** per modul: lihat saja, kelola penuh (CRUD), menilai, review, ekspor, dst. Tombol cepat *Hanya lihat / Penuh / Kosongkan*. Role bisa diubah/dihapus kapan saja. |
 | **Backup Data** | 4 jenis: **(1)** database keseluruhan, **(2)** data Owner (PDF), **(3)** data role tambahan (PDF), **(4)** data karyawan (PDF) + tombol **1 PDF gabungan**. |
 | **Lainnya** | Menu samping (garis tiga di kiri atas), notifikasi dalam aplikasi, mode offline untuk laporan harian, PWA, audit log (dari → ke), lupa password lewat permintaan ke Owner, wizard setup awal, auto-logout idle. |
 
-**Dihapus atas permintaan klien:** Absensi & Absen Saya, Cuti/Izin, Hari Libur, Shift Kerja, halaman Pengaturan.
+**Dihapus atas permintaan klien:** Absensi & Absen Saya, Cuti/Izin, Hari Libur, Shift Kerja, halaman Pengaturan, **Departemen & Jabatan** (halaman dan semua kolomnya), dan **Form Penilaian**.
+**Tim** kini berupa isian teks bebas (bukan dropdown).
 (Dari V1: Payroll, Rekrutmen, Pelatihan, Dokumen, Pengumuman, 2FA OTP, pendaftaran mandiri, Gmail API.)
 
 ## Role & hak akses
@@ -30,6 +31,9 @@ penilaian bulanan, rekap, dashboard grafik, **Role & Hak Akses fleksibel**, sert
 
 > **Cakupan data:** tanpa izin *Melihat data SEMUA tim*, pemilik role hanya melihat karyawan yang atasannya adalah dirinya / departemen yang ia pimpin.
 > Untuk role setingkat Ka. Unit yang harus melihat semua tim, centang izin tersebut.
+
+## Database: PostgreSQL atau MySQL/MariaDB
+Aplikasi berjalan di kedua jenis database (query dipilih otomatis lewat `App\Support\Sql`). Isi `DB_CONNECTION=pgsql` atau `mysql` di `.env`.
 
 ## Instalasi
 
@@ -45,8 +49,14 @@ php artisan serve
 Saat belum ada pengguna, muncul **Setup Awal** untuk membuat akun Owner (role, izin, dan departemen awal ikut dibuat).
 Alternatif: isi `SDM_ADMIN_EMAIL` + `SDM_ADMIN_PASSWORD` di `.env` lalu `php artisan migrate --seed`.
 
+**Hosting tanpa terminal (cPanel):** jalankan perintah artisan lewat **Cron Jobs** cPanel — buat cron sekali jalan (mis. tiap menit), tunggu ±1 menit, lalu **hapus cron-nya**:
+```
+cd /home/USER/folder-aplikasi && php artisan migrate --force && php artisan db:seed --class=RolePermissionSeeder --force && php artisan optimize:clear
+```
+(ganti `USER` dan `folder-aplikasi`; tambahkan `>> storage/logs/cron.log 2>&1` bila ingin melihat hasilnya). Log kesalahan aplikasi ada di `storage/logs/laravel.log` (File Manager).
+
 **Upgrade dari versi sebelumnya:** jalankan `php artisan migrate` (migrasi baru menghapus tabel Absensi/Cuti/Libur/Shift/Pengaturan, dan izin lamanya),
-lalu `php artisan db:seed --class=RolePermissionSeeder` untuk memutakhirkan katalog izin (tidak menimpa role yang sudah Anda ubah).
+(migrasi baru juga menghapus Departemen & Jabatan), lalu `php artisan db:seed --class=RolePermissionSeeder` untuk memutakhirkan katalog izin (tidak menimpa role yang sudah Anda ubah).
 
 ### Wajib untuk produksi
 1. **HTTPS** — kamera hanya diizinkan browser di HTTPS (atau `localhost`).

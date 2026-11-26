@@ -12,12 +12,6 @@ class DailyReport extends Model
 
     public const REVIEW_STATUSES = ['menunggu' => 'Menunggu Review', 'disetujui' => 'Disetujui', 'perlu_revisi' => 'Perlu Revisi'];
 
-    /**
-     * Ekspresi SQL (PostgreSQL) untuk total jam kerja: selisih end-start, ditambah 24 jam bila melewati
-     * tengah malam atau sama persis (aturan yang sama dengan template PMKCM V).
-     */
-    public const HOURS_SQL = 'case when end_time > start_time then extract(epoch from (end_time - start_time)) else extract(epoch from (end_time - start_time)) + 86400 end / 3600.0';
-
     protected $fillable = [
         'employee_id', 'report_date', 'team', 'area',
         'start_time', 'end_time', 'task', 'issue', 'status',

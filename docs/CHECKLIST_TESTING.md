@@ -27,6 +27,14 @@ Gunakan HTTPS atau `http://localhost:8000` agar kamera berfungsi. Uji juga di HP
 - [ ] Kepala kerja: Direncanakan -> Berjalan -> Selesai (isi tanggal selesai)
 - [ ] Laporan Harian: dropdown "Perintah Kerja" menampilkan perintah milik sendiri; laporan tampil di detail perintah
 
+## 3b. Perbaikan terbaru (uji di hosting MariaDB)
+- [ ] **Semua Laporan**, **Rekap**, dan **Penilaian** terbuka tanpa error (sebelumnya error SQL di MariaDB)
+- [ ] Kolom **Tim** (karyawan, laporan, perintah kerja, filter) berupa isian teks, bukan dropdown
+- [ ] Menu/halaman **Departemen & Jabatan** serta kolomnya sudah tidak ada di mana pun
+- [ ] Menu **Form Penilaian** sudah tidak ada
+- [ ] Kelola Pengguna: tombol **Hapus** di samping Nonaktifkan; tidak bisa hapus diri sendiri / satu-satunya Owner; data karyawannya tetap ada
+- [ ] Setelah tambah / ubah / hapus data di halaman mana pun, halaman **tetap di halaman itu** (tidak pindah ke dashboard)
+
 ## 4. Penilaian Anggota
 - [ ] Sebelum Selesai: tombol nilai tidak ada. Setelah Selesai: kepala kerja menilai tiap anggota (5 kriteria + catatan)
 - [ ] Anggota hanya melihat nilainya sendiri; kepala kerja melihat semua; menu **Penilaian Anggota** + ekspor Excel/PDF

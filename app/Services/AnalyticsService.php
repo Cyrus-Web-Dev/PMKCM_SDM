@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\Sql;
 use App\Models\Assessment;
 use App\Models\Employee;
 use App\Models\User;
@@ -27,7 +28,7 @@ class AnalyticsService
         $today = today();
 
         $employees = TeamScope::constrainEmployees(Employee::query()->where('employment_status', 'active'), $user)
-            ->when($team, fn ($q, $t) => $q->where('team', $t))
+            ->when($team, fn ($q, $t) => $q->where('team', Sql::like(), Sql::contains($t)))
             ->when($role, fn ($q, $r) => $q->whereHas('user', fn ($u) => $u->role($r)))
             ->orderBy('full_name')->get(['id', 'full_name', 'team']);
         $ids = $employees->pluck('id')->all();
@@ -35,7 +36,7 @@ class AnalyticsService
         $score = DB::table('assessments')->whereIn('employee_id', $ids)->whereBetween('period', [$p['from'], $p['to']])
             ->selectRaw('avg(quality) as q, avg(discipline) as d, avg(teamwork) as t, avg(initiative) as i, avg(safety) as s, avg(total) as total')->first();
 
-        $orders = fn () => DB::table('work_orders')->when($team, fn ($q, $t) => $q->where('team', $t));
+        $orders = fn () => DB::table('work_orders')->when($team, fn ($q, $t) => $q->where('team', Sql::like(), Sql::contains($t)));
 
         $cards = [
             'employees' => count($ids),
@@ -97,7 +98,7 @@ class AnalyticsService
     {
         [$daily, $keys] = $this->buckets($p);
         $key = fn ($d) => $daily ? substr((string) $d, 0, 10) : substr((string) $d, 0, 7);
-        $base = fn () => DB::table('work_orders')->when($team, fn ($q, $t) => $q->where('team', $t));
+        $base = fn () => DB::table('work_orders')->when($team, fn ($q, $t) => $q->where('team', Sql::like(), Sql::contains($t)));
 
         $created = $done = [];
         $base()->whereBetween('order_date', [$p['from'], $p['to']])->selectRaw('order_date as d, count(*) as n')->groupBy('order_date')->get()
@@ -131,14 +132,19 @@ class AnalyticsService
         $endMonth = Carbon::parse($p['to'])->startOfMonth();
         $startMonth = $endMonth->copy()->subMonths(5);
 
-        $rows = DB::table('assessments')->whereIn('employee_id', $ids)
+        // period selalu tanggal 1 pada bulan yang dinilai, jadi cukup dikelompokkan per tanggal lalu dipetakan ke bulan.
+        $rows = [];
+        DB::table('assessments')->whereIn('employee_id', $ids)
             ->whereBetween('period', [$startMonth->toDateString(), $endMonth->copy()->endOfMonth()->toDateString()])
-            ->selectRaw("to_char(period, 'YYYY-MM') as m, avg(total) as score")->groupBy('m')->pluck('score', 'm');
+            ->selectRaw('period, avg(total) as score')->groupBy('period')->get()
+            ->each(function ($r) use (&$rows) {
+                $rows[substr((string) $r->period, 0, 7)] = (float) $r->score;
+            });
 
         $labels = $values = [];
         for ($m = $startMonth->copy(); $m->lte($endMonth); $m->addMonth()) {
             $labels[] = substr(Assessment::MONTHS[(int) $m->format('n') - 1], 0, 3).' '.$m->format('y');
-            $values[] = isset($rows[$m->format('Y-m')]) ? round((float) $rows[$m->format('Y-m')], 1) : null;
+            $values[] = isset($rows[$m->format('Y-m')]) ? round($rows[$m->format('Y-m')], 1) : null;
         }
 
         return ['labels' => $labels, 'values' => $values];

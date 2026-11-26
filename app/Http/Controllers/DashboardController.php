@@ -46,8 +46,6 @@ class DashboardController extends Controller
         return Inertia::render('Dashboard/Employee', [
             'employee' => $employee ? [
                 'full_name' => $employee->full_name,
-                'position' => $employee->position?->title,
-                'department' => $employee->department?->name,
                 'join_date' => $employee->join_date?->toDateString(),
             ] : null,
             'today_reports' => $employee ? DailyReport::where('employee_id', $employee->id)->whereDate('report_date', today())->count() : 0,

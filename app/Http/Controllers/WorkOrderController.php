@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Models\DailyReport;
 use App\Models\Employee;
 use App\Models\User;
@@ -48,7 +49,7 @@ class WorkOrderController extends Controller
             $query->where('status', $status);
         }
         if ($team = $request->input('team')) {
-            $query->where('team', $team);
+            $query->where('team', Sql::like(), Sql::contains($team));
         }
         if ($from = $request->input('from')) {
             $query->whereDate('order_date', '>=', $from);
@@ -62,9 +63,9 @@ class WorkOrderController extends Controller
         if ($q = trim((string) $request->input('q'))) {
             $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
             $query->where(function ($w) use ($like) {
-                $w->where('description', 'ilike', $like)->orWhere('number', 'ilike', $like)->orWhere('area', 'ilike', $like)
-                    ->orWhereHas('leader', fn ($e) => $e->where('full_name', 'ilike', $like))
-                    ->orWhereHas('members', fn ($e) => $e->where('full_name', 'ilike', $like));
+                $w->where('description', Sql::like(), $like)->orWhere('number', Sql::like(), $like)->orWhere('area', Sql::like(), $like)
+                    ->orWhereHas('leader', fn ($e) => $e->where('full_name', Sql::like(), $like))
+                    ->orWhereHas('members', fn ($e) => $e->where('full_name', Sql::like(), $like));
             });
         }
 
@@ -315,7 +316,7 @@ class WorkOrderController extends Controller
             'member_ids' => ['required', 'array', 'min:1', 'max:50'],
             'member_ids.*' => ['integer', 'distinct', 'exists:employees,id'],
             'description' => ['required', 'string', 'max:2000'],
-            'team' => ['nullable', Rule::in(config('hr.teams'))],
+            'team' => ['nullable', 'string', 'max:30'],
             'area' => ['nullable', 'string', 'max:100'],
         ];
         if ($creating) {

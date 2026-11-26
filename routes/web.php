@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\AssessmentController;
 use App\Http\Controllers\HistoryCardController;
@@ -45,12 +44,6 @@ Route::middleware(['auth', 'has.role'])->group(function () {
     Route::get('/employees/{employee}/photo', [EmployeeController::class, 'photo'])->name('employees.photo');
     Route::resource('employees', EmployeeController::class);
 
-    // --- Departemen & Jabatan ---
-    Route::get('/departments', [DepartmentController::class, 'index'])->name('departments.index');
-    Route::post('/departments', [DepartmentController::class, 'store'])->name('departments.store');
-    Route::put('/departments/{department}', [DepartmentController::class, 'update'])->name('departments.update');
-    Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->name('departments.destroy');
-    Route::post('/positions', [DepartmentController::class, 'storePosition'])->name('positions.store');
 
     // --- Kelola Pengguna & Role ---
     Route::get('/users', [UserManagementController::class, 'index'])->name('users.index');
@@ -60,6 +53,7 @@ Route::middleware(['auth', 'has.role'])->group(function () {
     Route::post('/users/{user}/toggle-active', [UserManagementController::class, 'toggleActive'])->name('users.toggle-active');
     Route::put('/users/{user}/roles', [UserManagementController::class, 'updateRoles'])->name('users.roles');
     Route::post('/users/reset-requests/{resetRequest}/dismiss', [UserManagementController::class, 'dismissResetRequest'])->name('users.reset-requests.dismiss');
+    Route::delete('/users/{user}', [UserManagementController::class, 'destroy'])->name('users.destroy');
     Route::post('/users/{user}/reset-password', [UserManagementController::class, 'resetPassword'])->name('users.reset-password');
 
     // --- Laporan Harian (tiap karyawan mengisi sendiri; "Semua Laporan" untuk pemegang izin daily_reports.view) ---
@@ -82,8 +76,6 @@ Route::middleware(['auth', 'has.role'])->group(function () {
     Route::get('/assessments', [AssessmentController::class, 'index'])->name('assessments.index');
     Route::post('/assessments', [AssessmentController::class, 'store'])->name('assessments.store');
     Route::get('/assessments/export', [AssessmentController::class, 'export'])->name('assessments.export');
-    Route::get('/assessments/sheet', [AssessmentController::class, 'sheet'])->name('assessments.sheet');
-    Route::get('/assessments/sheet/pdf', [AssessmentController::class, 'sheetPdf'])->name('assessments.sheet.pdf');
     Route::delete('/assessments/{assessment}', [AssessmentController::class, 'destroy'])->name('assessments.destroy');
     Route::get('/my/assessments', [AssessmentController::class, 'mine'])->name('assessments.mine');
 

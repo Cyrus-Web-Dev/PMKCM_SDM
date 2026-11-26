@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Http\Controllers\Concerns\RespondsToSync;
 use App\Models\DailyReport;
 use App\Models\DailyReportPhoto;
@@ -226,7 +227,7 @@ class DailyReportController extends Controller
         [$query, $p] = $this->filtered($request);
 
         $sum = (clone $query)->toBase()->selectRaw(
-            "count(*) as n, coalesce(sum(case when status = 'kendala' then 1 else 0 end), 0) as k, coalesce(sum(".DailyReport::HOURS_SQL."), 0) as h"
+            "count(*) as n, coalesce(sum(case when status = 'kendala' then 1 else 0 end), 0) as k, coalesce(sum(".Sql::hours()."), 0) as h"
         )->first();
 
         $reports = $query->withCount(['photos', 'comments'])->orderByDesc('report_date')->orderByDesc('id')
@@ -314,7 +315,7 @@ class DailyReportController extends Controller
         );
 
         if ($team = $request->input('team')) {
-            $query->where('team', $team);
+            $query->where('team', Sql::like(), Sql::contains($team));
         }
         if ($employeeId = $request->input('employee_id')) {
             $query->where('employee_id', $employeeId);
@@ -328,8 +329,8 @@ class DailyReportController extends Controller
         if ($q = trim((string) $request->input('q'))) {
             $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
             $query->where(function ($w) use ($like) {
-                $w->where('area', 'ilike', $like)->orWhere('task', 'ilike', $like)->orWhere('issue', 'ilike', $like)
-                    ->orWhereHas('employee', fn ($e) => $e->where('full_name', 'ilike', $like)->orWhere('nip', 'ilike', $like));
+                $w->where('area', Sql::like(), $like)->orWhere('task', Sql::like(), $like)->orWhere('issue', Sql::like(), $like)
+                    ->orWhereHas('employee', fn ($e) => $e->where('full_name', Sql::like(), $like)->orWhere('nip', Sql::like(), $like));
             });
         }
 
@@ -340,7 +341,7 @@ class DailyReportController extends Controller
     private function rules(Request $request, int $existingPhotos = 0): array
     {
         return [
-            'team' => ['nullable', Rule::in(config('hr.teams'))],
+            'team' => ['nullable', 'string', 'max:30'],
             'area' => ['required', 'string', 'max:100'],
             'start_time' => ['required', 'date_format:H:i'],
             'end_time' => ['required', 'date_format:H:i'],

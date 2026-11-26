@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Sql;
 use App\Models\Employee;
 use App\Models\WorkOrder;
 use App\Support\Exporter;
@@ -90,7 +91,7 @@ class HistoryCardController extends Controller
         $query = WorkOrder::query()->visibleTo($request->user())->where('status', 'selesai')->with(['leader:id,full_name', 'members:id,full_name']);
 
         if ($team = $request->input('team')) {
-            $query->where('team', $team);
+            $query->where('team', Sql::like(), Sql::contains($team));
         }
         if ($from = $request->input('from')) {
             $query->whereDate('end_date', '>=', $from);
@@ -104,9 +105,9 @@ class HistoryCardController extends Controller
         if ($q = trim((string) $request->input('q'))) {
             $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $q).'%';
             $query->where(function ($w) use ($like) {
-                $w->where('description', 'ilike', $like)->orWhere('number', 'ilike', $like)->orWhere('area', 'ilike', $like)
-                    ->orWhereHas('leader', fn ($e) => $e->where('full_name', 'ilike', $like))
-                    ->orWhereHas('members', fn ($e) => $e->where('full_name', 'ilike', $like));
+                $w->where('description', Sql::like(), $like)->orWhere('number', Sql::like(), $like)->orWhere('area', Sql::like(), $like)
+                    ->orWhereHas('leader', fn ($e) => $e->where('full_name', Sql::like(), $like))
+                    ->orWhereHas('members', fn ($e) => $e->where('full_name', Sql::like(), $like));
             });
         }
 
