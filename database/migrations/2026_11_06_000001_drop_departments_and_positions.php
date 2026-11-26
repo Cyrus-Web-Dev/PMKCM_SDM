@@ -13,8 +13,8 @@ use Spatie\Permission\PermissionRegistrar;
 return new class extends Migration
 {
     // Tanpa transaksi pembungkus: di PostgreSQL satu perintah yang gagal (dalam try/catch) tidak boleh menggagalkan sisanya.
-    public bool $withinTransaction = false;
-
+    public $withinTransaction = false;
+    
     public function up(): void
     {
         // Indeks gabungan lama (employment_status, department_id) harus dilepas dulu sebelum kolomnya dibuang.
